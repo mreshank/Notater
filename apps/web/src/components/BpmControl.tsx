@@ -12,8 +12,8 @@ export function BpmControl() {
         setBpm(value);
     };
 
-    const increment = () => handleBpmChange(Math.min(project.bpm + 5, 200));
-    const decrement = () => handleBpmChange(Math.max(project.bpm - 5, 60));
+    const increment = () => handleBpmChange(Math.min(project.bpm + 5, 300));
+    const decrement = () => handleBpmChange(Math.max(project.bpm - 5, 15));
 
     return (
         <div className="flex items-center gap-2">

@@ -67,6 +67,7 @@ interface AppState {
   // UI State
   isPlaying: boolean;
   isAudioInitialized: boolean;
+  currentStep: number; // Current playback step (0-15)
   activeView: "pianoroll" | "pads" | "sequencer" | "piano" | "mix";
   theme: "lofi" | "cyber" | "neo";
   synthPreset: SynthPreset;
@@ -147,6 +148,7 @@ export const useStore = create<AppState>((set, get) => ({
   trackSamples: {},
   
   isPlaying: false,
+  currentStep: 0,
   isAudioInitialized: false,
   activeView: "sequencer",
   theme: "cyber",
@@ -172,17 +174,29 @@ export const useStore = create<AppState>((set, get) => ({
     const { isPlaying, isAudioInitialized, initializeAudio } = get();
     if (!isAudioInitialized) {
       initializeAudio().then(() => {
+        // Schedule step counter
+        Tone.getTransport().scheduleRepeat((time) => {
+          Tone.getDraw().schedule(() => {
+            set(state => ({ currentStep: state.currentStep + 1 }));
+          }, time);
+        }, "16n");
         startTransport();
-        set({ isPlaying: true });
+        set({ isPlaying: true, currentStep: 0 });
       });
       return;
     }
     if (isPlaying) {
       stopTransport();
-      set({ isPlaying: false });
+      set({ isPlaying: false, currentStep: 0 });
     } else {
+      // Schedule step counter
+      Tone.getTransport().scheduleRepeat((time) => {
+        Tone.getDraw().schedule(() => {
+          set(state => ({ currentStep: state.currentStep + 1 }));
+        }, time);
+      }, "16n");
       startTransport();
-      set({ isPlaying: true });
+      set({ isPlaying: true, currentStep: 0 });
     }
     p2p.broadcast({ type: "TRANSPORT", playing: !isPlaying });
   },
@@ -445,7 +459,6 @@ export const useStore = create<AppState>((set, get) => ({
       });
       return;
     }
-    if (globalSynth) globalSynth.triggerAttackRelease(note, duration);
     if (globalSynth) globalSynth.triggerAttackRelease(note, duration);
   },
 

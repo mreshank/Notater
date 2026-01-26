@@ -61,20 +61,23 @@ export function createEffectsChain(): EffectsChain {
 }
 
 /**
- * Create a minimal effects chain (just reverb + output)
+ * Create a minimal effects chain (reverb + limiter + output)
  */
-export function createMinimalChain(): Pick<EffectsChain, "reverb" | "output"> {
+export function createMinimalChain(): Pick<EffectsChain, "reverb" | "output"> & { limiter: Tone.Limiter } {
   const reverb = new Tone.Reverb({
     decay: 1.5,
-    wet: 0.2,
+    wet: 0.25,
   });
 
-  const output = new Tone.Gain(0.8);
+  const limiter = new Tone.Limiter(-3); // Prevent clipping
 
-  reverb.connect(output);
+  const output = new Tone.Gain(0.7);
+
+  reverb.connect(limiter);
+  limiter.connect(output);
   output.toDestination();
 
-  return { reverb, output };
+  return { reverb, limiter, output };
 }
 
 /**

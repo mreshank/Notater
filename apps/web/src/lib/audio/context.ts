@@ -59,6 +59,7 @@ export function startTransport(): void {
  */
 export function stopTransport(): void {
   Tone.getTransport().stop();
+  Tone.getTransport().cancel(); // Clear scheduled events
 }
 
 /**

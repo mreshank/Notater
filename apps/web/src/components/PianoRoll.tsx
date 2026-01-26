@@ -1,16 +1,41 @@
 "use client";
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
-const NOTES = ["C5", "B4", "A#4", "A4", "G#4", "G4", "F#4", "F4", "E4", "D#4", "D4", "C#4", "C4"];
-const NOTE_HEIGHT = 24;
-const STEP_WIDTH = 32;
+// Full octave range with proper musical notes
+const NOTES = ["C5", "B4", "A#4", "A4", "G#4", "G4", "F#4", "F4", "E4", "D#4", "D4", "C#4", "C4", "B3", "A#3", "A3"];
+
+// Scale patterns (in semitones from root)
+const SCALES: Record<string, number[]> = {
+    major: [0, 2, 4, 5, 7, 9, 11],
+    minor: [0, 2, 3, 5, 7, 8, 10],
+    pentatonic: [0, 2, 4, 7, 9],
+    blues: [0, 3, 5, 6, 7, 10],
+};
+
+const NOTE_HEIGHT = 26;
+const STEP_WIDTH = 34;
 const STEPS = 16;
-const PIANO_KEY_WIDTH = 40;
+const PIANO_KEY_WIDTH = 44;
+
+// Get semitone value from note name
+function noteToSemitone(note: string): number {
+    const noteMap: Record<string, number> = { 'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5, 'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11 };
+    const match = note.match(/([A-G]#?)(\d)/);
+    if (!match) return 0;
+    return noteMap[match[1]] + (parseInt(match[2]) * 12);
+}
+
+// Check if note is in scale
+function isInScale(note: string, rootNote: string, scale: number[]): boolean {
+    const noteSemitone = noteToSemitone(note) % 12;
+    const rootSemitone = noteToSemitone(rootNote) % 12;
+    const interval = (noteSemitone - rootSemitone + 12) % 12;
+    return scale.includes(interval);
+}
 
 export function PianoRoll() {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const {
         playNote,
@@ -18,197 +43,228 @@ export function PianoRoll() {
         initializeAudio,
         isPlaying,
         project,
+        currentStep: globalStep,
         pianoRollNotes: notes,
         addPianoNote,
         removePianoNote,
         clearPianoNotes
     } = useStore();
 
-    const [currentStep, setCurrentStep] = useState(0);
+    const [selectedScale, setSelectedScale] = useState<string>("major");
+    const [rootNote, setRootNote] = useState<string>("C4");
+    const [showScaleGuide, setShowScaleGuide] = useState(true);
+    const [playingNotes, setPlayingNotes] = useState<Set<string>>(new Set());
 
-    const width = PIANO_KEY_WIDTH + STEPS * STEP_WIDTH;
-    const height = NOTES.length * NOTE_HEIGHT;
+    const currentStep = globalStep !== undefined ? globalStep % STEPS : 0;
 
-    // Draw the piano roll
-    const draw = useCallback(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-
-        // Clear
-        ctx.fillStyle = "var(--background, #09090b)";
-        ctx.fillRect(0, 0, width, height);
-
-        // Draw piano keys
-        NOTES.forEach((note, i) => {
-            const y = i * NOTE_HEIGHT;
-            const isBlack = note.includes("#");
-
-            ctx.fillStyle = isBlack ? "#18181b" : "#f4f4f5";
-            ctx.fillRect(0, y, PIANO_KEY_WIDTH, NOTE_HEIGHT);
-            ctx.strokeStyle = "#3f3f46";
-            ctx.strokeRect(0, y, PIANO_KEY_WIDTH, NOTE_HEIGHT);
-
-            // Note label
-            ctx.fillStyle = isBlack ? "#a1a1aa" : "#27272a";
-            ctx.font = "10px monospace";
-            ctx.textAlign = "right";
-            ctx.fillText(note, PIANO_KEY_WIDTH - 4, y + NOTE_HEIGHT / 2 + 3);
-        });
-
-        // Draw grid
-        for (let i = 0; i < NOTES.length; i++) {
-            const y = i * NOTE_HEIGHT;
-            const isBlack = NOTES[i].includes("#");
-            ctx.fillStyle = isBlack ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.05)";
-            ctx.fillRect(PIANO_KEY_WIDTH, y, width - PIANO_KEY_WIDTH, NOTE_HEIGHT);
-
-            for (let j = 0; j <= STEPS; j++) {
-                const x = PIANO_KEY_WIDTH + j * STEP_WIDTH;
-                ctx.strokeStyle = j % 4 === 0 ? "#52525b" : "#27272a";
-                ctx.beginPath();
-                ctx.moveTo(x, y);
-                ctx.lineTo(x, y + NOTE_HEIGHT);
-                ctx.stroke();
-            }
-
-            // Horizontal line
-            ctx.strokeStyle = "#27272a";
-            ctx.beginPath();
-            ctx.moveTo(PIANO_KEY_WIDTH, y);
-            ctx.lineTo(width, y);
-            ctx.stroke();
-        }
-
-        // Draw playhead
-        if (isPlaying) {
-            const playheadX = PIANO_KEY_WIDTH + currentStep * STEP_WIDTH;
-            ctx.fillStyle = "rgba(217, 70, 239, 0.3)";
-            ctx.fillRect(playheadX, 0, STEP_WIDTH, height);
-        }
-
-        // Draw notes
-        notes.forEach((note) => {
-            const noteIndex = NOTES.indexOf(note.pitch);
-            if (noteIndex === -1) return;
-
-            const x = PIANO_KEY_WIDTH + note.step * STEP_WIDTH;
-            const y = noteIndex * NOTE_HEIGHT + 2;
-            const w = note.duration * STEP_WIDTH - 4;
-            const h = NOTE_HEIGHT - 4;
-
-            // Note body with gradient
-            const gradient = ctx.createLinearGradient(x, y, x, y + h);
-            gradient.addColorStop(0, "#d946ef");
-            gradient.addColorStop(1, "#a855f7");
-            ctx.fillStyle = gradient;
-            ctx.beginPath();
-            ctx.roundRect(x + 2, y, w, h, 4);
-            ctx.fill();
-        });
-    }, [notes, isPlaying, currentStep, width, height]);
-
-    // Redraw on state change
-    useEffect(() => {
-        draw();
-    }, [draw]);
-
-    // Playback step tracking
+    // Play notes on step change
     useEffect(() => {
         if (!isPlaying) {
-            const timeout = setTimeout(() => setCurrentStep(0), 0);
-            return () => clearTimeout(timeout);
-        }
-
-        const stepDuration = (60 / project.bpm / 4) * 1000;
-        const interval = setInterval(() => {
-            setCurrentStep((prev) => {
-                const nextStep = (prev + 1) % STEPS;
-
-                // Trigger notes on this step
-                notes.forEach((note) => {
-                    if (note.step === nextStep) {
-                        playNote(note.pitch, "8n");
-                    }
-                });
-
-                return nextStep;
-            });
-        }, stepDuration);
-
-        return () => clearInterval(interval);
-    }, [isPlaying, project.bpm, notes, playNote]);
-
-    // Handle canvas click
-    const handleClick = async (e: React.MouseEvent<HTMLCanvasElement>) => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        // Ignore clicks on piano keys
-        if (x < PIANO_KEY_WIDTH) {
-            const noteIndex = Math.floor(y / NOTE_HEIGHT);
-            if (noteIndex >= 0 && noteIndex < NOTES.length) {
-                if (!isAudioInitialized) await initializeAudio();
-                playNote(NOTES[noteIndex], "8n");
-            }
+            setPlayingNotes(new Set());
             return;
         }
 
-        const step = Math.floor((x - PIANO_KEY_WIDTH) / STEP_WIDTH);
-        const noteIndex = Math.floor(y / NOTE_HEIGHT);
+        const stepNotes = notes.filter((n) => n.step === currentStep);
+        const newPlaying = new Set<string>();
 
-        if (step >= 0 && step < STEPS && noteIndex >= 0 && noteIndex < NOTES.length) {
-            const pitch = NOTES[noteIndex];
+        stepNotes.forEach(async (note) => {
+            if (!isAudioInitialized) await initializeAudio();
+            playNote(note.pitch, "8n");
+            newPlaying.add(note.id);
+        });
 
-            // Check if note exists at this position
-            const existingNote = notes.find((n) => n.pitch === pitch && n.step === step);
+        setPlayingNotes(newPlaying);
+        const timeout = setTimeout(() => setPlayingNotes(new Set()), 120);
+        return () => clearTimeout(timeout);
+    }, [currentStep, isPlaying, notes, playNote, isAudioInitialized, initializeAudio]);
 
-            if (existingNote) {
-                removePianoNote(existingNote.id);
-            } else {
-                if (!isAudioInitialized) await initializeAudio();
-                playNote(pitch, "16n");
-                addPianoNote({
-                    id: `${Date.now()}-${Math.random()}`,
-                    pitch,
-                    step,
-                    duration: 1
-                });
-            }
+    // Handle cell click
+    const handleCellClick = async (pitch: string, step: number) => {
+        const existingNote = notes.find((n) => n.pitch === pitch && n.step === step);
+        if (existingNote) {
+            removePianoNote(existingNote.id);
+        } else {
+            if (!isAudioInitialized) await initializeAudio();
+            playNote(pitch, "16n");
+            addPianoNote({
+                id: `${Date.now()}-${Math.random()}`,
+                pitch,
+                step,
+                duration: 1
+            });
         }
     };
 
+    // Handle piano key click
+    const handleKeyClick = async (pitch: string) => {
+        if (!isAudioInitialized) await initializeAudio();
+        playNote(pitch, "8n");
+    };
+
+    const scaleNotes = SCALES[selectedScale] || SCALES.major;
+
     return (
-        <div className="w-full max-w-2xl mx-auto p-4">
-            <div
-                ref={containerRef}
-                className="relative overflow-x-auto rounded-lg border border-border shadow-lg"
-            >
-                <canvas
-                    ref={canvasRef}
-                    width={width}
-                    height={height}
-                    onClick={handleClick}
-                    className="cursor-crosshair block [image-rendering:pixelated]"
-                />
+        <div className="w-full max-w-4xl mx-auto">
+            {/* Controls */}
+            <div className="flex items-center justify-between mb-3 px-2 flex-wrap gap-2">
+                <div className="flex items-center gap-3">
+                    {/* Scale selector */}
+                    <div className="flex items-center gap-1">
+                        <span className="text-[10px] opacity-50">Scale:</span>
+                        <select
+                            value={selectedScale}
+                            onChange={(e) => setSelectedScale(e.target.value)}
+                            className="text-xs bg-surface border border-border rounded px-2 py-1"
+                            title="Select scale"
+                        >
+                            <option value="major">Major</option>
+                            <option value="minor">Minor</option>
+                            <option value="pentatonic">Pentatonic</option>
+                            <option value="blues">Blues</option>
+                        </select>
+                    </div>
+
+                    {/* Root note */}
+                    <div className="flex items-center gap-1">
+                        <span className="text-[10px] opacity-50">Key:</span>
+                        <select
+                            value={rootNote}
+                            onChange={(e) => setRootNote(e.target.value)}
+                            className="text-xs bg-surface border border-border rounded px-2 py-1"
+                            title="Select root note"
+                        >
+                            {["C4", "C#4", "D4", "D#4", "E4", "F4", "F#4", "G4", "G#4", "A4", "A#4", "B4"].map(n => (
+                                <option key={n} value={n}>{n}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Toggle scale guide */}
+                    <button
+                        onClick={() => setShowScaleGuide(!showScaleGuide)}
+                        className={`text-[10px] px-2 py-1 rounded ${showScaleGuide ? "bg-primary/20 text-primary" : "opacity-50"}`}
+                    >
+                        Scale Guide
+                    </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        onClick={clearPianoNotes}
+                        className="px-3 py-1 bg-destructive/20 text-destructive hover:bg-destructive/30 rounded text-xs font-bold"
+                    >
+                        Clear
+                    </motion.button>
+                    <span className="text-[10px] opacity-40 font-mono">
+                        {notes.length} notes • Step {currentStep + 1}
+                    </span>
+                </div>
             </div>
 
-            <div className="flex justify-center gap-2 mt-4">
-                <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    onClick={clearPianoNotes}
-                    className="px-4 py-2 bg-surface hover:bg-surface-hover rounded-lg text-xs font-bold transition-colors"
-                >
-                    CLEAR
-                </motion.button>
-                <span className="px-4 py-2 text-xs text-foreground/50">
-                    {notes.length} notes
-                </span>
+            {/* Piano Roll Grid */}
+            <div
+                ref={containerRef}
+                className="overflow-x-auto rounded-xl border border-border bg-zinc-950 shadow-2xl"
+            >
+                <div className="inline-flex flex-col min-w-max">
+                    {/* Header */}
+                    <div className="flex border-b border-zinc-800">
+                        <div className="shrink-0 bg-zinc-900/50" style={{ width: PIANO_KEY_WIDTH }} />
+                        {Array.from({ length: STEPS }).map((_, i) => (
+                            <div
+                                key={i}
+                                className={`flex items-center justify-center text-[10px] font-mono border-r border-zinc-800 ${i % 4 === 0 ? "font-bold opacity-70 bg-zinc-900/30" : "opacity-40"
+                                    } ${currentStep === i && isPlaying ? "bg-purple-500/30 text-purple-300" : ""}`}
+                                style={{ width: STEP_WIDTH, height: 22 }}
+                            >
+                                {i + 1}
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Note rows */}
+                    {NOTES.map((note) => {
+                        const isBlack = note.includes("#");
+                        const inScale = showScaleGuide && isInScale(note, rootNote, scaleNotes);
+                        const isRoot = note.replace(/\d/, '') === rootNote.replace(/\d/, '');
+
+                        return (
+                            <div key={note} className="flex">
+                                {/* Piano key */}
+                                <motion.button
+                                    whileTap={{ scale: 0.97, x: 2 }}
+                                    onClick={() => handleKeyClick(note)}
+                                    className={`shrink-0 flex items-center justify-end pr-2 text-[10px] font-mono border-b transition-all ${isBlack
+                                            ? "bg-zinc-900 text-zinc-500 border-zinc-800 hover:bg-zinc-800"
+                                            : "bg-zinc-200 text-zinc-700 border-zinc-300 hover:bg-zinc-300"
+                                        } ${isRoot ? "ring-2 ring-inset ring-purple-500/50" : ""}`}
+                                    style={{ width: PIANO_KEY_WIDTH, height: NOTE_HEIGHT }}
+                                >
+                                    {note}
+                                </motion.button>
+
+                                {/* Step cells */}
+                                {Array.from({ length: STEPS }).map((_, stepIndex) => {
+                                    const noteData = notes.find((n) => n.pitch === note && n.step === stepIndex);
+                                    const hasNote = !!noteData;
+                                    const isCurrentStep = currentStep === stepIndex && isPlaying;
+                                    const isNoteActive = noteData && playingNotes.has(noteData.id);
+                                    const isDownbeat = stepIndex % 4 === 0;
+
+                                    return (
+                                        <motion.button
+                                            key={stepIndex}
+                                            onClick={() => handleCellClick(note, stepIndex)}
+                                            whileTap={{ scale: 0.92 }}
+                                            className={`relative border-b border-r transition-all ${isBlack ? "border-zinc-800" : "border-zinc-800/50"
+                                                } ${isDownbeat ? "border-l border-l-zinc-700" : ""}`}
+                                            style={{
+                                                width: STEP_WIDTH,
+                                                height: NOTE_HEIGHT,
+                                                backgroundColor: isCurrentStep
+                                                    ? "rgba(168, 85, 247, 0.2)"
+                                                    : inScale
+                                                        ? isBlack ? "rgba(168, 85, 247, 0.08)" : "rgba(168, 85, 247, 0.05)"
+                                                        : isBlack
+                                                            ? "rgba(0, 0, 0, 0.4)"
+                                                            : "rgba(39, 39, 42, 0.3)",
+                                            }}
+                                        >
+                                            <AnimatePresence>
+                                                {hasNote && (
+                                                    <motion.div
+                                                        initial={{ scale: 0.5, opacity: 0 }}
+                                                        animate={{
+                                                            scale: isNoteActive ? 1.05 : 1,
+                                                            opacity: 1,
+                                                        }}
+                                                        exit={{ scale: 0.5, opacity: 0 }}
+                                                        transition={{ duration: 0.08 }}
+                                                        className="absolute inset-1 rounded"
+                                                        style={{
+                                                            background: isNoteActive
+                                                                ? "linear-gradient(135deg, #22c55e, #16a34a)"
+                                                                : "linear-gradient(135deg, #a855f7, #7c3aed)",
+                                                            boxShadow: isNoteActive
+                                                                ? "0 0 16px rgba(34, 197, 94, 0.6)"
+                                                                : "0 2px 8px rgba(168, 85, 247, 0.4)",
+                                                        }}
+                                                    />
+                                                )}
+                                            </AnimatePresence>
+                                        </motion.button>
+                                    );
+                                })}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Help */}
+            <div className="text-[10px] opacity-40 text-center mt-3">
+                Click cells to place notes • Highlighted cells are in the {selectedScale} scale of {rootNote}
             </div>
         </div>
     );

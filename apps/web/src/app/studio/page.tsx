@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useStore } from "@/lib/store";
 import { MiniKeyboard } from "@/components/MiniKeyboard";
-import { DrumPads } from "@/components/DrumPads";
+import { Drums } from "@/components/Drums";
 import { StepSequencer } from "@/components/StepSequencer";
 import { ProjectControl } from "@/components/ProjectControl";
 import { PianoRoll } from "@/components/PianoRoll";
@@ -11,7 +11,7 @@ import { Mixer } from "@/components/Mixer";
 import { SynthSelect } from "@/components/SynthSelect";
 import { motion, AnimatePresence } from "framer-motion";
 
-type ViewMode = "keys" | "pads" | "seq" | "piano" | "mix";
+type ViewMode = "keys" | "drums" | "seq" | "piano" | "mix";
 
 import { midiManager } from "@/lib/midi";
 
@@ -108,15 +108,15 @@ export default function StudioPage() {
                                 <MiniKeyboard />
                             </motion.div>
                         )}
-                        {activeView === "pads" && (
+                        {activeView === "drums" && (
                             <motion.div
-                                key="pads"
+                                key="drums"
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -20 }}
-                                className="w-full max-w-sm"
+                                className="w-full max-w-2xl"
                             >
-                                <DrumPads />
+                                <Drums />
                             </motion.div>
                         )}
                         {activeView === "seq" && (
@@ -183,12 +183,12 @@ export default function StudioPage() {
                     <span className="text-xs font-bold">Keys</span>
                 </button>
                 <button
-                    onClick={() => setActiveView("pads")}
-                    className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${activeView === "pads" ? "opacity-100 text-primary" : "opacity-50 hover:opacity-100"
+                    onClick={() => setActiveView("drums")}
+                    className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${activeView === "drums" ? "opacity-100 text-primary" : "opacity-50 hover:opacity-100"
                         }`}
                 >
                     <span className="text-2xl">🥁</span>
-                    <span className="text-xs font-bold">Pads</span>
+                    <span className="text-xs font-bold">Drums</span>
                 </button>
                 <button
                     onClick={() => setActiveView("mix")}

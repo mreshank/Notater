@@ -28,7 +28,7 @@ cd Notate
 pnpm install
 
 # Start the PWA development server
-pnpm dev --filter notater-pwa
+pnpm --filter notater-pwa dev
 
 # Build all packages
 pnpm build
