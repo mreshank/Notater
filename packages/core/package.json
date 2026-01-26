@@ -10,7 +10,7 @@
         "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
         "test": "vitest run",
         "prepublishOnly": "pnpm build",
-        "release": "pnpm build && npm publish --access public"
+        "release": "pnpm build && pnpm publish --access public"
     },
     "devDependencies": {
         "tsup": "^8.0.0",

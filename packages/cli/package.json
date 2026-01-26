@@ -11,7 +11,7 @@
         "dev": "tsup src/index.ts --watch",
         "start": "node bin/notater.js",
         "prepublishOnly": "pnpm build",
-        "release": "pnpm build && npm publish --access public"
+        "release": "pnpm build && pnpm publish --access public"
     },
     "dependencies": {
         "commander": "^11.0.0",
