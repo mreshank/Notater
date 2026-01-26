@@ -1,0 +1,15 @@
+{
+    "name": "notater-monorepo",
+    "private": true,
+    "packageManager": "pnpm@10.12.1",
+    "scripts": {
+        "dev": "pnpm -r dev",
+        "build": "pnpm -r build",
+        "test": "pnpm -r test",
+        "lint": "pnpm -r lint",
+        "release": "pnpm build && pnpm publish -r --access public"
+    },
+    "engines": {
+        "node": ">=18"
+    }
+}

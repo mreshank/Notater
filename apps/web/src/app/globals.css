@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+:root {
+  /* Default Theme: LOFI (Warm, Grainy, Cozy) */
+  --background: #fdf6e3;
+  --foreground: #2d2a2e;
+  --surface: #eee8d5;
+  --surface-hover: #d3c6aa;
+  --primary: #d33682;
+  --primary-foreground: #ffffff;
+  --secondary: #b58900;
+  --secondary-foreground: #ffffff;
+  --accent: #2aa198;
+  --accent-foreground: #ffffff;
+  --destructive: #dc322f;
+  --destructive-foreground: #ffffff;
+  --border: #93a1a1;
+  --input: #93a1a1;
+  --ring: #d33682;
+  --radius: 0.5rem;
+
+  /* Fonts */
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+[data-theme='cyber'] {
+  /* Theme: CYBER (Dark, Neon, High Contrast) */
+  --background: #09090b;
+  --foreground: #f4f4f5;
+  --surface: #18181b;
+  --surface-hover: #27272a;
+  --primary: #d946ef;
+  --primary-foreground: #ffffff;
+  --secondary: #6366f1;
+  --secondary-foreground: #ffffff;
+  --accent: #10b981;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #3f3f46;
+  --input: #3f3f46;
+  --ring: #d946ef;
+}
+
+[data-theme='neo'] {
+  /* Theme: NEO-BRUTALISM (Stark, Bold, black borders) */
+  --background: #fffdf0;
+  --foreground: #000000;
+  --surface: #ffffff;
+  --surface-hover: #88ff88;
+  --primary: #000000;
+  --primary-foreground: #ffffff;
+  --secondary: #bf94ff;
+  --secondary-foreground: #000000;
+  --accent: #ff6b6b;
+  --accent-foreground: #000000;
+  --destructive: #ff0000;
+  --destructive-foreground: #ffffff;
+  --border: #000000;
+  --input: #000000;
+  --ring: #000000;
+  --radius: 0px;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overscroll-behavior: none;
+}
+
+/* Glassmorphism Utilities */
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+[data-theme='cyber'] .glass {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Scrollbar hiding for app-like feel */
+::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}

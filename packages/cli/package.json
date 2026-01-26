@@ -1,0 +1,29 @@
+{
+    "name": "notater-cli",
+    "version": "0.1.0",
+    "description": "CLI for Notater Ecosystem",
+    "bin": {
+        "notater": "bin/notater.js"
+    },
+    "main": "dist/index.js",
+    "scripts": {
+        "build": "tsup src/index.ts --format cjs,esm --dts",
+        "dev": "tsup src/index.ts --watch",
+        "start": "node bin/notater.js",
+        "prepublishOnly": "pnpm build",
+        "release": "pnpm build && npm publish --access public"
+    },
+    "dependencies": {
+        "commander": "^11.0.0",
+        "chalk": "^5.0.0",
+        "inquirer": "^9.0.0",
+        "notater": "workspace:*"
+    },
+    "devDependencies": {
+        "tsup": "^8.0.0",
+        "typescript": "^5.0.0",
+        "@types/inquirer": "^9.0.0",
+        "@types/node": "^20.0.0"
+    },
+    "type": "module"
+}

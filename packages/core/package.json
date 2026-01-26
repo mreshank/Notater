@@ -1,0 +1,25 @@
+{
+    "name": "notater",
+    "version": "0.1.0",
+    "description": "Core music logic for Notater ecosystem",
+    "main": "dist/index.js",
+    "module": "dist/index.mjs",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsup src/index.ts --format cjs,esm --dts",
+        "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+        "test": "vitest run",
+        "prepublishOnly": "pnpm build",
+        "release": "pnpm build && npm publish --access public"
+    },
+    "devDependencies": {
+        "tsup": "^8.0.0",
+        "typescript": "^5.0.0",
+        "vitest": "^1.0.0"
+    },
+    "dependencies": {
+        "midifile-ts": "^1.5.2",
+        "tone": "^15.0.0",
+        "zod": "^3.0.0"
+    }
+}
