@@ -216,7 +216,7 @@ INITIAL_MIXER["melodic"] = {
 export const useStore = create<AppState>((set, get) => ({
   project: {
     id: generateId(),
-    name: "Untitled Vibes",
+    name: "Notater Vibes",
     bpm: 120,
     barCount: 2,
     notes: ""
