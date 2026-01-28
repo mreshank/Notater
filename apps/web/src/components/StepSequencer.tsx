@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useStore } from "@/lib/store";
 import { motion } from "framer-motion";
+import { Plus, Trash2, Shuffle, Eraser, Sparkles } from "lucide-react";
 
 const ROWS = [
     { id: "kick", label: "KICK", color: "#ec4899" },
@@ -114,17 +115,17 @@ export function StepSequencer() {
     };
 
     return (
-        <div className="w-full max-w-3xl mx-auto p-4">
+        <div className="w-full max-w-3xl mx-auto p-4 custom-scrollbar overflow-x-auto">
             {/* Controls */}
             <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                 {/* Presets */}
                 <div className="flex items-center gap-1">
-                    <span className="text-[10px] opacity-50 mr-1">Preset:</span>
+                    <span className="text-[10px] opacity-50 mr-1 font-bold">PRESET:</span>
                     {(Object.keys(PRESETS) as PresetName[]).map(name => (
                         <button
                             key={name}
                             onClick={() => loadPreset(name)}
-                            className={`px-2 py-1 text-[10px] font-bold rounded transition-all ${selectedPreset === name
+                            className={`px-2 py-1 text-[10px] font-bold rounded-full transition-all ${selectedPreset === name
                                 ? "bg-primary text-primary-foreground"
                                 : "bg-surface border border-border hover:bg-surface-hover"
                                 }`}
@@ -145,8 +146,8 @@ export function StepSequencer() {
                 {Array.from({ length: STEPS }).map((_, i) => (
                     <div
                         key={i}
-                        className={`flex-1 h-1.5 rounded-full transition-all ${currentStep === i && isPlaying
-                            ? "bg-primary scale-y-150"
+                        className={`flex-1 h-1 rounded-full transition-all ${currentStep === i && isPlaying
+                            ? "bg-primary scale-y-150 shadow-[0_0_10px_var(--primary)]"
                             : i % 4 === 0
                                 ? "bg-foreground/30"
                                 : "bg-foreground/10"
@@ -160,24 +161,24 @@ export function StepSequencer() {
                 {ROWS.map((row) => (
                     <div key={row.id} className="flex items-center gap-2 group">
                         {/* Row label with controls */}
-                        <div className="w-20 flex items-center gap-1">
+                        <div className="w-20 flex items-center justify-between pr-2">
                             <span className="text-xs font-bold" style={{ color: row.color }}>
                                 {row.label}
                             </span>
-                            <div className="hidden group-hover:flex gap-0.5">
+                            <div className="hidden group-hover:flex gap-1">
                                 <button
                                     onClick={() => fillRow(row.id)}
-                                    className="w-4 h-4 text-[8px] bg-primary/20 hover:bg-primary/40 rounded"
+                                    className="p-0.5 text-foreground/50 hover:text-primary transition-colors"
                                     title="Fill row"
                                 >
-                                    +
+                                    <Sparkles size={10} />
                                 </button>
                                 <button
                                     onClick={() => clearRow(row.id)}
-                                    className="w-4 h-4 text-[8px] bg-destructive/20 hover:bg-destructive/40 rounded"
+                                    className="p-0.5 text-foreground/50 hover:text-destructive transition-colors"
                                     title="Clear row"
                                 >
-                                    ×
+                                    <Eraser size={10} />
                                 </button>
                             </div>
                         </div>
@@ -189,11 +190,11 @@ export function StepSequencer() {
                                     key={stepIndex}
                                     whileTap={{ scale: 0.85 }}
                                     onClick={() => handleStepClick(row.id, stepIndex)}
-                                    className={`flex-1 aspect-square rounded-md transition-all border ${stepIndex % 4 === 0 ? "border-foreground/20" : "border-transparent"
-                                        } ${currentStep === stepIndex && isPlaying ? "ring-2 ring-accent scale-105" : ""}`}
+                                    className={`flex-1 aspect-square rounded-sm transition-all border ${stepIndex % 4 === 0 ? "border-foreground/10" : "border-transparent"
+                                        } ${currentStep === stepIndex && isPlaying ? "ring-1 ring-background scale-95 brightness-150" : ""}`}
                                     style={{
                                         backgroundColor: isActive ? row.color : 'var(--surface)',
-                                        boxShadow: isActive ? `0 2px 8px ${row.color}50` : 'none',
+                                        boxShadow: isActive ? `0 0 10px ${row.color}40` : 'none',
                                     }}
                                 />
                             ))}
@@ -203,26 +204,26 @@ export function StepSequencer() {
             </div>
 
             {/* Bottom controls */}
-            <div className="flex justify-center gap-2 mt-4">
+            <div className="flex justify-center gap-2 mt-6">
                 <motion.button
                     whileTap={{ scale: 0.95 }}
                     onClick={clearGrid}
-                    className="px-4 py-2 bg-surface hover:bg-surface-hover rounded-lg text-xs font-bold transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-surface hover:bg-surface-hover rounded-lg text-xs font-bold transition-colors border border-border"
                 >
-                    CLEAR
+                    <Trash2 size={12} /> CLEAR
                 </motion.button>
                 <motion.button
                     whileTap={{ scale: 0.95 }}
                     onClick={randomize}
-                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-xs font-bold hover:opacity-90 transition-opacity"
+                    className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-xs font-bold hover:opacity-90 transition-opacity shadow-lg shadow-primary/20"
                 >
-                    RANDOMIZE
+                    <Shuffle size={12} /> RANDOMIZE
                 </motion.button>
             </div>
 
             {/* Help */}
-            <div className="text-[10px] opacity-40 text-center mt-3">
-                Click steps to toggle • Hover row labels for fill/clear
+            <div className="text-[10px] opacity-30 text-center mt-4 font-mono">
+                Click steps to toggle • Hover row labels for actions
             </div>
         </div>
     );

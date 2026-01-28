@@ -7,9 +7,12 @@ import {
   startTransport,
   stopTransport,
   createSynth,
-  createMinimalChain,
+  createEffectsChain,
   type SynthPreset,
 } from "./audio";
+import { 
+    initLooper, startRecording, stopRecording, playLoop as audioPlayLoop, stopLoop as audioStopLoop, clearLoop as audioClearLoop, setLoopVolume, muteLoop 
+} from "./audio/looper";
 import { 
   saveProject as saveProjectToDb, 
   getProject as getProjectFromDb,
@@ -17,10 +20,31 @@ import {
 } from "./db";
 import { exportProjectToWav } from "./audio/export";
 import { getSampler } from "./audio/sampler";
-import { StoredSample, saveSample, getSample } from "./db";
+import { saveSample, getSample } from "./db";
 import { p2p } from "./p2p";
+import { toast } from "sonner";
 
 // Types
+export interface SynthParams {
+    oscillatorType: "triangle" | "sine" | "square" | "sawtooth" | "fatsawtooth" | "pulse" | "pwm";
+    attack: number;
+    decay: number;
+    sustain: number;
+    release: number;
+    filterCutoff: number; // Hz
+    filterResonance: number; // Q
+    detune: number; // cents
+}
+
+export interface LoopTrack {
+    id: string;
+    state: "empty" | "recording" | "playing" | "stopped";
+    volume: number; // dB
+    muted: boolean;
+    url?: string;
+}
+
+
 const ROWS = [
   { id: "kick", label: "KICK", note: "C2", color: "bg-primary" },
   { id: "snare", label: "SNARE", note: "D2", color: "bg-secondary" },
@@ -42,11 +66,20 @@ export interface MixerChannel {
   pan: number;    // -1 to 1
   muted: boolean;
   solo: boolean;
+  sends: {
+      reverb: number; // 0 to 1
+      delay: number;
+  };
+  eq: {
+      low: number; // -12 to 12
+      mid: number;
+      high: number;
+  };
 }
 
 // Global synth instance (lazy initialized)
 let globalSynth: Tone.PolySynth | null = null;
-let globalEffects: ReturnType<typeof createMinimalChain> | null = null;
+let globalEffects: ReturnType<typeof createEffectsChain> | null = null;
 const trackPlayers: Record<string, Tone.Player> = {};
 
 interface AppState {
@@ -55,9 +88,25 @@ interface AppState {
     id: string;
     name: string;
     bpm: number;
+    barCount: number;
+    notes: string;
   };
 
   // Editor State
+  masterEffects: {
+      reverbWet: number;
+      delayWet: number;
+      delayTime: string;
+      feedback: number;
+      filterFreq: number;
+      filterRes: number;
+      bitCrusherBits: number;
+      bitCrusherWet: number;
+      chorusDepth: number;
+      chorusWet: number;
+      compressorThresh: number;
+      compressorRatio: number;
+  };
   sequencerGrid: Record<string, boolean[]>;
   pianoRollNotes: Note[];
   mixer: Record<string, MixerChannel>;
@@ -66,23 +115,39 @@ interface AppState {
 
   // UI State
   isPlaying: boolean;
+  isRecording: boolean;
   isAudioInitialized: boolean;
-  currentStep: number; // Current playback step (0-15)
+  currentStep: number;
   activeView: "pianoroll" | "pads" | "sequencer" | "piano" | "mix";
-  theme: "lofi" | "cyber" | "neo";
+  theme: "lofi" | "cyber" | "neo" | "forest" | "ocean" | "sunset" | "midnight";
   synthPreset: SynthPreset;
+  synthParams: SynthParams; 
+  looper: Record<string, LoopTrack>;
+  
+  // Actions
+  setSynthParam: (param: keyof SynthParams, value: any) => void;
   isLoading: boolean;
+  currentTool: "pointer" | "pencil" | "eraser";
 
   // Actions
   initializeAudio: () => Promise<void>;
   togglePlay: () => void;
+  toggleRecord: () => void;
   setBpm: (bpm: number) => void;
-  setTheme: (theme: "lofi" | "cyber" | "neo") => void;
+  setBarCount: (barCount: number) => void;
+  setProjectNotes: (notes: string) => void;
+  setTool: (tool: "pointer" | "pencil" | "eraser") => void;
+  
+  // Settings
+  setTheme: (theme: "lofi" | "cyber" | "neo" | "forest" | "ocean" | "sunset" | "midnight") => void;
   setSynthPreset: (preset: SynthPreset) => void;
+  setMasterEffect: (param: keyof AppState['masterEffects'], value: number | string) => void;
 
   // Mixer Actions
   setTrackVolume: (trackId: string, volume: number) => void;
   setTrackPan: (trackId: string, pan: number) => void;
+  setTrackEQ: (trackId: string, band: "low" | "mid" | "high", value: number) => void;
+  setTrackSend: (trackId: string, type: "reverb" | "delay", value: number) => void;
   toggleTrackMute: (trackId: string) => void;
   toggleTrackSolo: (trackId: string) => void;
   
@@ -107,6 +172,15 @@ interface AppState {
   
   // Export
   exportAudio: () => Promise<void>;
+
+  // Looper Actions
+  loopRecord: (trackId: string) => Promise<void>;
+  loopStopRecord: (trackId: string) => Promise<void>;
+  loopPlay: (trackId: string) => void;
+  loopStop: (trackId: string) => void;
+  loopClear: (trackId: string) => void;
+  loopVolume: (trackId: string, val: number) => void;
+  loopMute: (trackId: string) => void;
 }
 
 const INITIAL_GRID: Record<string, boolean[]> = {};
@@ -120,7 +194,9 @@ ROWS.forEach(row => {
         volume: -6,
         pan: 0,
         muted: false,
-        solo: false
+        solo: false,
+        sends: { reverb: 0, delay: 0 },
+        eq: { low: 0, mid: 0, high: 0 }
     };
 });
 
@@ -131,7 +207,9 @@ INITIAL_MIXER["melodic"] = {
     volume: -6,
     pan: 0,
     muted: false,
-    solo: false
+    solo: false,
+    sends: { reverb: 0, delay: 0 },
+    eq: { low: 0, mid: 0, high: 0 }
 };
 
 
@@ -140,6 +218,22 @@ export const useStore = create<AppState>((set, get) => ({
     id: generateId(),
     name: "Untitled Vibes",
     bpm: 120,
+    barCount: 2,
+    notes: ""
+  },
+  masterEffects: {
+      reverbWet: 0.25,
+      delayWet: 0,
+      delayTime: "8n",
+      feedback: 0.3,
+      filterFreq: 20000,
+      filterRes: 0,
+      bitCrusherBits: 4,
+      bitCrusherWet: 0,
+      chorusDepth: 0.5,
+      chorusWet: 0,
+      compressorThresh: -20,
+      compressorRatio: 4
   },
   sequencerGrid: INITIAL_GRID,
   pianoRollNotes: [],
@@ -148,20 +242,39 @@ export const useStore = create<AppState>((set, get) => ({
   trackSamples: {},
   
   isPlaying: false,
+  isRecording: false,
   currentStep: 0,
   isAudioInitialized: false,
   activeView: "sequencer",
   theme: "cyber",
   synthPreset: "basic",
+  synthParams: {
+      oscillatorType: "triangle",
+      attack: 0.02,
+      decay: 0.1,
+      sustain: 0.5,
+      release: 0.5,
+      filterCutoff: 2000,
+      filterResonance: 0,
+      detune: 0
+  },
+  looper: {
+      "1": { id: "1", state: "empty", volume: 0, muted: false },
+      "2": { id: "2", state: "empty", volume: 0, muted: false },
+      "3": { id: "3", state: "empty", volume: 0, muted: false },
+      "4": { id: "4", state: "empty", volume: 0, muted: false },
+  },
   isLoading: false,
+  currentTool: "pointer",
 
   initializeAudio: async () => {
     if (get().isAudioInitialized) return;
     try {
       await initAudio();
-      globalEffects = createMinimalChain();
+      globalEffects = createEffectsChain();
       globalSynth = createSynth(get().synthPreset);
-      globalSynth.connect(globalEffects.reverb);
+      // Connect synth to START of chain (distortion)
+      if (globalEffects) globalSynth.connect(globalEffects.distortion);
       setGlobalBpm(get().project.bpm);
       set({ isAudioInitialized: true });
       console.log("🎹 Synth initialized");
@@ -201,10 +314,26 @@ export const useStore = create<AppState>((set, get) => ({
     p2p.broadcast({ type: "TRANSPORT", playing: !isPlaying });
   },
 
+  toggleRecord: () => {
+      set(state => ({ isRecording: !state.isRecording }));
+  },
+
+  setProjectNotes: (notes) => {
+      set(state => ({ project: { ...state.project, notes } }));
+  },
+
+  setTool: (tool) => {
+      set({ currentTool: tool });
+  },
+  
   setBpm: (bpm) => {
     setGlobalBpm(bpm);
     set((state) => ({ project: { ...state.project, bpm } }));
     p2p.broadcast({ type: "BPM", bpm });
+  },
+
+  setBarCount: (barCount) => {
+      set((state) => ({ project: { ...state.project, barCount } }));
   },
 
   setTheme: (theme) => {
@@ -222,9 +351,45 @@ export const useStore = create<AppState>((set, get) => ({
       
       // Create new one
       globalSynth = createSynth(preset);
-      globalSynth.connect(globalEffects.reverb);
+      globalSynth.connect(globalEffects.distortion);
     }
     set({ synthPreset: preset });
+  },
+
+  setMasterEffect: (param, value) => {
+    if (globalEffects) {
+        if (param === "reverbWet") globalEffects.reverb.wet.value = value as number;
+        else if (param === "delayWet") globalEffects.delay.wet.value = value as number;
+        else if (param === "delayTime") globalEffects.delay.delayTime.value = value as string;
+        else if (param === "feedback") globalEffects.delay.feedback.value = value as number;
+        else if (param === "filterFreq") globalEffects.filter.frequency.value = value as number;
+        else if (param === "filterRes") globalEffects.filter.Q.value = value as number;
+        else if (param === "bitCrusherBits") globalEffects.bitCrusher.bits.value = value as number;
+        else if (param === "bitCrusherWet") globalEffects.bitCrusher.wet.value = value as number;
+        else if (param === "chorusDepth") globalEffects.chorus.depth = value as number; // accessor
+        else if (param === "chorusWet") globalEffects.chorus.wet.value = value as number;
+        else if (param === "compressorThresh") globalEffects.compressor.threshold.value = value as number;
+        else if (param === "compressorRatio") globalEffects.compressor.ratio.value = value as number;
+    }
+    set(state => ({
+        masterEffects: { ...state.masterEffects, [param]: value }
+    }));
+  },
+
+  setSynthParam: (param, value) => {
+    set(state => ({ synthParams: { ...state.synthParams, [param]: value } }));
+    
+    if (globalSynth) {
+        if (param === "oscillatorType") {
+             globalSynth.set({ oscillator: { type: value as any } });
+        } else if (["attack", "decay", "sustain", "release"].includes(param)) {
+             // Grab fresh state for full envelope update
+             const s = get().synthParams;
+             globalSynth.set({ envelope: { attack: s.attack, decay: s.decay, sustain: s.sustain, release: s.release } });
+        } else if (param === "detune") {
+             globalSynth.set({ detune: value });
+        }
+    }
   },
 
   // Mixer Actions
@@ -246,6 +411,38 @@ export const useStore = create<AppState>((set, get) => ({
         }
     }));
     p2p.broadcast({ type: "MIXER_UPDATE", trackId, field: "pan", value: pan });
+  },
+
+  setTrackEQ: (trackId, band, value) => {
+    set((state) => ({
+        mixer: {
+            ...state.mixer,
+            [trackId]: { 
+                ...state.mixer[trackId], 
+                eq: {
+                    ...state.mixer[trackId].eq,
+                    [band]: value
+                }
+            }
+        }
+    }));
+    p2p.broadcast({ type: "MIXER_UPDATE", trackId, field: `eq-${band}`, value: value });
+  },
+
+  setTrackSend: (trackId, type, value) => {
+    set((state) => ({
+        mixer: {
+            ...state.mixer,
+            [trackId]: { 
+                ...state.mixer[trackId], 
+                sends: {
+                    ...state.mixer[trackId].sends,
+                    [type]: value
+                }
+            }
+        }
+    }));
+    p2p.broadcast({ type: "MIXER_UPDATE", trackId, field: `send-${type}`, value: value });
   },
 
   toggleTrackMute: (trackId) => {
@@ -295,98 +492,39 @@ export const useStore = create<AppState>((set, get) => ({
   clearPianoNotes: () => set({ pianoRollNotes: [] }),
 
   // Persistence
+  // Persistence
   saveProject: async () => {
     set({ isLoading: true });
-    const state = get();
-    
-    // Construct Pattern from editor state
-    const tracks: Track[] = [];
-    
-    // 1. Drum Tracks
-    ROWS.forEach(row => {
-      const steps: Record<number, Step> = {};
-      state.sequencerGrid[row.id].forEach((isActive, index) => {
-        if (isActive) {
-          steps[index] = {
-            id: generateId(),
-            index,
-            type: "on",
-            velocity: 0.8,
-            duration: 0.25,
-            microTiming: 0
-          };
-        }
-      });
-      
-      tracks.push({
-        id: row.id,
-        length: 16,
-        steps,
-        instrument: {
-          id: row.id,
-          name: row.label,
-          type: "sampler",
-          source: row.note, // Storing note as source for now (simplified)
-          volume: 0,
-          pan: 0,
-          muted: false,
-          solo: false,
-          color: row.color,
-          effects: []
-        }
-      });
-    });
+    try {
+        const state = get();
+        
+        // Save to DB
+        // We save the raw editor state to make reloading easier
+        const projectData = {
+            sequencerGrid: state.sequencerGrid,
+            pianoRollNotes: state.pianoRollNotes,
+            synthPreset: state.synthPreset,
+            trackSampleIds: state.trackSampleIds,
+            barCount: state.project.barCount,
+            notes: state.project.notes
+        };
 
-    // 2. Melodic Track (Piano Roll)
-    const melodicSteps: Record<number, Step> = {};
-    state.pianoRollNotes.forEach(note => {
-      melodicSteps[note.step] = {
-        id: note.id,
-        index: note.step,
-        type: "on",
-        velocity: 0.8,
-        duration: note.duration * 0.25, // Convert steps to beats
-        microTiming: 0,
-        pitch: note.pitch
-      };
-    });
-
-    tracks.push({
-      id: "melodic",
-      length: 16, // TODO: Dynamic length
-      steps: melodicSteps,
-      instrument: {
-        id: "synth",
-        name: "Main Synth",
-        type: "synth",
-        source: state.synthPreset,
-        volume: 0,
-        pan: 0,
-        muted: false,
-        solo: false,
-        color: "#d946ef",
-        effects: []
-      }
-    });
-
-    // Save to DB
-    const projectData = {
-        sequencerGrid: state.sequencerGrid,
-        pianoRollNotes: state.pianoRollNotes,
-        synthPreset: state.synthPreset,
-        trackSampleIds: state.trackSampleIds,
-    };
-
-    await saveProjectToDb({
-      id: state.project.id,
-      name: state.project.name,
-      bpm: state.project.bpm,
-      createdAt: Date.now(), // Will be ignored by update
-      updatedAt: Date.now(),
-      data: JSON.stringify(projectData)
-    });
-    
-    set({ isLoading: false });
+        await saveProjectToDb({
+            id: state.project.id,
+            name: state.project.name,
+            bpm: state.project.bpm,
+            createdAt: Date.now(), // Will be ignored by update
+            updatedAt: Date.now(), // Updated
+            data: JSON.stringify(projectData)
+        });
+        
+        toast.success("Project saved successfully!");
+    } catch (err) {
+        console.error("Failed to save project:", err);
+        toast.error("Failed to save project.");
+    } finally {
+        set({ isLoading: false });
+    }
   },
 
   loadProject: async (id) => {
@@ -398,6 +536,13 @@ export const useStore = create<AppState>((set, get) => ({
         
         // Update state
         set({
+            project: {
+                id: p.id,
+                name: p.name,
+                bpm: p.bpm,
+                barCount: data.barCount || 4, // Load barCount
+                notes: data.notes || "" 
+            },
             sequencerGrid: data.sequencerGrid || INITIAL_GRID,
             pianoRollNotes: data.pianoRollNotes || [],
             synthPreset: data.synthPreset || "basic",
@@ -430,7 +575,7 @@ export const useStore = create<AppState>((set, get) => ({
             globalSynth.disconnect();
             globalSynth.dispose();
             globalSynth = createSynth(data.synthPreset);
-            globalSynth.connect(globalEffects.reverb);
+            globalSynth.connect(globalEffects.delay);
         }
       }
     } catch (e) {
@@ -441,7 +586,7 @@ export const useStore = create<AppState>((set, get) => ({
 
   loadDemoProject: () => {
     set({
-        project: { id: generateId(), name: "Demo Project", bpm: 128 },
+        project: { id: generateId(), name: "Demo Project", bpm: 128, barCount: 2, notes: "" },
         sequencerGrid: INITIAL_GRID,
         pianoRollNotes: [],
         synthPreset: "basic",
@@ -503,7 +648,7 @@ export const useStore = create<AppState>((set, get) => ({
     const state = get();
     // Validate
     if (state.pianoRollNotes.length === 0 && Object.values(state.sequencerGrid).every(row => row.every(s => !s))) {
-        alert("Project is empty!"); 
+        toast.error("Project is empty! Add some notes first.");
         return;
     }
 
@@ -527,7 +672,7 @@ export const useStore = create<AppState>((set, get) => ({
         URL.revokeObjectURL(url);
     } catch (e) {
         console.error("Export failed", e);
-        alert("Export failed. See console.");
+        throw e;
     } finally {
         set({ isLoading: false });
     }
@@ -566,5 +711,72 @@ export const useStore = create<AppState>((set, get) => ({
       } finally {
           set({ isLoading: false });
       }
+  },
+
+  // Looper Implementations
+  loopRecord: async (trackId) => {
+      // Ensure audio init
+      const { isAudioInitialized, initializeAudio } = get();
+      if (!isAudioInitialized) await initializeAudio();
+      
+      initLooper();
+      await startRecording();
+      
+      set(state => ({
+          looper: { ...state.looper, [trackId]: { ...state.looper[trackId], state: "recording" } }
+      }));
+  },
+
+  loopStopRecord: async (trackId) => {
+      const url = await stopRecording(trackId);
+      if (url) {
+           set(state => ({
+              looper: { ...state.looper, [trackId]: { ...state.looper[trackId], state: "stopped", url } }
+          }));
+      } else {
+           // Failed?
+           set(state => ({
+              looper: { ...state.looper, [trackId]: { ...state.looper[trackId], state: "empty" } }
+          }));
+      }
+  },
+
+  loopPlay: (trackId) => {
+      const track = get().looper[trackId];
+      if (track.url) {
+          audioPlayLoop(trackId);
+          set(state => ({
+              looper: { ...state.looper, [trackId]: { ...state.looper[trackId], state: "playing" } }
+          }));
+      }
+  },
+
+  loopStop: (trackId) => {
+      audioStopLoop(trackId);
+      set(state => ({
+          looper: { ...state.looper, [trackId]: { ...state.looper[trackId], state: "stopped" } }
+      }));
+  },
+
+  loopClear: (trackId) => {
+      audioClearLoop(trackId);
+      set(state => ({
+          looper: { ...state.looper, [trackId]: { ...state.looper[trackId], state: "empty", url: undefined } }
+      }));
+  },
+
+  loopVolume: (trackId, val) => {
+      setLoopVolume(trackId, val);
+       set(state => ({
+          looper: { ...state.looper, [trackId]: { ...state.looper[trackId], volume: val } }
+      }));
+  },
+
+  loopMute: (trackId) => {
+      const muted = !get().looper[trackId].muted;
+      muteLoop(trackId, muted);
+      set(state => ({
+          looper: { ...state.looper, [trackId]: { ...state.looper[trackId], muted } }
+      }));
   }
 }));

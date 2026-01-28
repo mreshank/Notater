@@ -9,8 +9,11 @@ export interface EffectsChain {
   reverb: Tone.Reverb;
   delay: Tone.FeedbackDelay;
   distortion: Tone.Distortion;
+  bitCrusher: Tone.BitCrusher;
+  chorus: Tone.Chorus;
   filter: Tone.Filter;
   compressor: Tone.Compressor;
+  limiter: Tone.Limiter;
   output: Tone.Gain;
 }
 
@@ -20,13 +23,13 @@ export interface EffectsChain {
 export function createEffectsChain(): EffectsChain {
   const reverb = new Tone.Reverb({
     decay: 2,
-    wet: 0.3,
+    wet: 0.2,
   });
 
   const delay = new Tone.FeedbackDelay({
     delayTime: "8n",
     feedback: 0.3,
-    wet: 0.2,
+    wet: 0,
   });
 
   const distortion = new Tone.Distortion({
@@ -34,8 +37,20 @@ export function createEffectsChain(): EffectsChain {
     wet: 0,
   });
 
+  const bitCrusher = new Tone.BitCrusher({
+    bits: 4,
+  });
+  bitCrusher.wet.value = 0;
+
+  const chorus = new Tone.Chorus({
+    frequency: 4,
+    delayTime: 2.5,
+    depth: 0.5,
+    wet: 0
+  }).start();
+
   const filter = new Tone.Filter({
-    frequency: 2000,
+    frequency: 20000,
     type: "lowpass",
     rolloff: -12,
   });
@@ -47,23 +62,34 @@ export function createEffectsChain(): EffectsChain {
     release: 0.25,
   });
 
+  const limiter = new Tone.Limiter(-1);
+
   const output = new Tone.Gain(0.8);
 
-  // Chain: distortion -> filter -> delay -> reverb -> compressor -> output
-  distortion.connect(filter);
-  filter.connect(delay);
+  // Chain: distortion -> bitCrusher -> filter -> chorus -> delay -> reverb -> compressor -> limiter -> output
+  distortion.connect(bitCrusher);
+  bitCrusher.connect(filter);
+  filter.connect(chorus);
+  chorus.connect(delay);
   delay.connect(reverb);
   reverb.connect(compressor);
-  compressor.connect(output);
+  compressor.connect(limiter);
+  limiter.connect(output);
   output.toDestination();
 
-  return { reverb, delay, distortion, filter, compressor, output };
+  return { reverb, delay, distortion, bitCrusher, chorus, filter, compressor, limiter, output };
 }
 
 /**
  * Create a minimal effects chain (reverb + limiter + output)
  */
-export function createMinimalChain(): Pick<EffectsChain, "reverb" | "output"> & { limiter: Tone.Limiter } {
+export function createMinimalChain(): Pick<EffectsChain, "reverb" | "delay" | "output"> & { limiter: Tone.Limiter } {
+  const delay = new Tone.FeedbackDelay({
+    delayTime: "8n",
+    feedback: 0.3,
+    wet: 0, // Start dry
+  });
+
   const reverb = new Tone.Reverb({
     decay: 1.5,
     wet: 0.25,
@@ -73,11 +99,13 @@ export function createMinimalChain(): Pick<EffectsChain, "reverb" | "output"> & 
 
   const output = new Tone.Gain(0.7);
 
+  // Chain: Delay -> Reverb -> Limiter -> Output
+  delay.connect(reverb);
   reverb.connect(limiter);
   limiter.connect(output);
   output.toDestination();
 
-  return { reverb, limiter, output };
+  return { delay, reverb, limiter, output };
 }
 
 /**

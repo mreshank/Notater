@@ -8,6 +8,8 @@ declare global {
             accounts: {
                 oauth2: {
                     initTokenClient: (config: any) => any;
+                    hasGrantedAllScopes: (token: any, scope: string) => boolean;
+                    revoke: (token: string, callback: () => void) => void;
                 };
             };
         };
@@ -34,10 +36,12 @@ const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+const FOLDER_NAME = "Notater Projects";
 
 let tokenClient: any;
 let gapiInited = false;
 let gisInited = false;
+let isAuthorized = false;
 
 // Initialize Google API Client
 export async function initGoogleClient() {
@@ -50,11 +54,25 @@ export async function initGoogleClient() {
     if (typeof window !== 'undefined' && !gapiInited && window.gapi) {
         await new Promise<void>((resolve) => {
             window.gapi!.load('client', async () => {
-                await window.gapi!.client.init({
-                    apiKey: API_KEY,
-                    discoveryDocs: [DISCOVERY_DOC],
-                });
-                gapiInited = true;
+                console.log("[Drive] GAPI client loaded, initializing...");
+                try {
+                    await window.gapi!.client.init({
+                        apiKey: API_KEY,
+                        discoveryDocs: [DISCOVERY_DOC],
+                    });
+                    console.log("[Drive] GAPI client initialized");
+                    gapiInited = true;
+                } catch (err) {
+                    console.error("[Drive] GAPI init failed", err);
+                }
+                
+                // Check if we have a stored token
+                const storedToken = localStorage.getItem("gdrive_token");
+                if (storedToken) {
+                    const token = JSON.parse(storedToken);
+                    window.gapi!.client.setToken(token);
+                    isAuthorized = true;
+                }
                 resolve();
             });
         });
@@ -65,83 +83,169 @@ export async function initGoogleClient() {
         tokenClient = window.google.accounts.oauth2.initTokenClient({
             client_id: CLIENT_ID,
             scope: SCOPES,
-            callback: '', // defined at request time
+            callback: (resp: any) => {
+                console.log("[Drive] Token callback received", resp);
+                if (resp.error !== undefined) {
+                    throw (resp);
+                }
+                isAuthorized = true;
+                // Save token for next session (expiry handling needed in real app)
+                // For now we just use it while valid
+                if (window.gapi?.client.getToken()) {
+                   localStorage.setItem("gdrive_token", JSON.stringify(window.gapi.client.getToken()));
+                }
+            },
         });
         gisInited = true;
     }
 }
 
+// Check auth status
+export function isDriveAuthorized() {
+    return isAuthorized;
+}
+
 // Request Access Token
 export async function loginToGoogle(): Promise<boolean> {
+    if (!tokenClient) await initGoogleClient();
+    
     return new Promise((resolve, reject) => {
-        if (!tokenClient) reject("Google Client not initialized");
-        
-        tokenClient.callback = async (resp: any) => {
-            if (resp.error) {
-                reject(resp);
-            }
-            resolve(true);
-        };
+        try {
+            // Override callback for this request
+            tokenClient.callback = async (resp: any) => {
+                if (resp.error) {
+                    reject(resp);
+                }
+                isAuthorized = true;
+                localStorage.setItem("gdrive_token", JSON.stringify(window.gapi!.client.getToken()));
+                resolve(true);
+            };
 
-        if (window.gapi && window.gapi.client.getToken() === null) {
-            tokenClient.requestAccessToken({ prompt: 'consent' });
-        } else {
-            tokenClient.requestAccessToken({ prompt: '' });
+            if (window.gapi && window.gapi.client.getToken() === null) {
+                console.log("[Drive] Requesting access token (consent)...");
+                tokenClient.requestAccessToken({ prompt: 'consent' });
+            } else {
+                console.log("[Drive] Requesting access token (no prompt)...");
+                tokenClient.requestAccessToken({ prompt: '' });
+            }
+        } catch (e) {
+            reject(e);
         }
     });
 }
 
-// List Notate Projects
+// Logout
+export function logoutFromGoogle() {
+    const token = window.gapi?.client.getToken();
+    if (token) {
+        window.google?.accounts.oauth2.revoke(token.access_token, () => {});
+        window.gapi?.client.setToken(null);
+        localStorage.removeItem("gdrive_token");
+        isAuthorized = false;
+    }
+}
+
+// Ensure "Notater Projects" folder exists
+async function ensureAppFolder(): Promise<string> {
+    const response = await window.gapi!.client.drive.files.list({
+        q: `mimeType = 'application/vnd.google-apps.folder' and name = '${FOLDER_NAME}' and trashed = false`,
+        fields: 'files(id, name)',
+    });
+    
+    const files = response.result.files;
+    if (files && files.length > 0) {
+        return files[0].id; // Return existing folder ID
+    }
+
+    // Create folder
+    const folderMetadata = {
+        name: FOLDER_NAME,
+        mimeType: 'application/vnd.google-apps.folder',
+    };
+    
+    const token = window.gapi!.client.getToken().access_token;
+    const res = await fetch('https://www.googleapis.com/drive/v3/files', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(folderMetadata)
+    });
+    
+    const folder = await res.json();
+    return folder.id;
+}
+
+// List Notater Projects
 export async function listDriveProjects() {
     if (!gapiInited) await initGoogleClient();
     
-    // Search for files with specific property or extension
-    // We can filter by appProperties if we set them, or just name
-    // q: "name contains '.notate' and trashed = false"
+    // Search for files in the folder or by property
+    const folderId = await ensureAppFolder();
+    
     const response = await window.gapi!.client.drive.files.list({
-        q: "name contains '.notate' and trashed = false",
+        q: `'${folderId}' in parents and trashed = false`,
         fields: 'files(id, name, createdTime, appProperties)',
     });
     
     return response.result.files;
 }
 
-// Upload Project
-export async function uploadProjectToDrive(project: StoredProject) {
+// Sync/Upload Project to App Folder
+export async function syncProjectToDrive(project: StoredProject): Promise<string> {
     if (!gapiInited) await initGoogleClient();
+    if (!isAuthorized) throw new Error("Not authorized");
+    
+    const folderId = await ensureAppFolder();
+    
+    // Check if file mainly exists
+    // We use a custom property 'projectId' to match files uniquely
+    const listRes = await window.gapi!.client.drive.files.list({
+        // q: `name = '${project.name}.notate' and '${folderId}' in parents and trashed = false`,
+        // Better: search by appProperties
+        q: `appProperties has { key='projectId' and value='${project.id}' } and '${folderId}' in parents and trashed = false`,
+        fields: 'files(id, name)',
+    });
+    
+    const existingFileId = listRes.result.files?.[0]?.id;
     
     // 1. Export package
     const blob = await exportProjectPackage(project.id);
+    const accessToken = window.gapi?.client.getToken()?.access_token;
     
-    // 2. Prepare Metadata
     const metadata = {
         name: `${project.name}.notate`,
         mimeType: 'application/zip',
+        parents: existingFileId ? undefined : [folderId], // Only set parent on create
         appProperties: {
             type: 'notater_project',
-            projectId: project.id
+            projectId: project.id,
+            lastSynced: Date.now().toString()
         }
     };
-    
-    // 3. Upload (Multipart)
-    // Using gapi for simple uploads is tricky for multipart.
-    // Easier to use raw fetch with the access token gapi holds.
-    
-    const accessToken = window.gapi?.client.getToken()?.access_token;
-    if (!accessToken) throw new Error("No access token");
     
     const form = new FormData();
     form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
     form.append('file', blob);
     
-    const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-        method: 'POST',
+    let url = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+    let method = 'POST';
+    
+    if (existingFileId) {
+        url = `https://www.googleapis.com/upload/drive/v3/files/${existingFileId}?uploadType=multipart`;
+        method = 'PATCH'; // Update content
+    }
+    
+    const res = await fetch(url, {
+        method,
         headers: new Headers({ 'Authorization': 'Bearer ' + accessToken }),
         body: form
     });
     
-    if (!res.ok) throw new Error("Upload failed: " + res.statusText);
-    return await res.json();
+    if (!res.ok) throw new Error("Sync failed: " + res.statusText);
+    const result = await res.json();
+    return result.id;
 }
 
 // Download Project

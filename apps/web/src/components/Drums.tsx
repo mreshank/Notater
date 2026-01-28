@@ -3,6 +3,10 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { playDrum, DrumType, DRUM_TYPES, setDrumKit, DrumKit, DRUM_KITS } from "@/lib/audio/drums";
 import { useStore } from "@/lib/store";
+import {
+    Circle, Triangle, Square, Hexagon, Octagon, Star, Disc, Zap,
+    Save, Trash2, X
+} from "lucide-react";
 
 type DrumMode = "pad" | "set" | "roll";
 
@@ -33,29 +37,29 @@ const SET_LAYOUT: Record<DrumType, { x: number; y: number; size: number; label: 
 };
 
 // Pad config
-const PAD_CONFIG: { type: DrumType; label: string; emoji: string; color: string; key: string }[] = [
-    { type: "kick", label: "KICK", emoji: "🦶", color: "#ec4899", key: "A" },
-    { type: "snare", label: "SNARE", emoji: "🥁", color: "#3b82f6", key: "S" },
-    { type: "hihat", label: "HI-HAT", emoji: "🔔", color: "#fbbf24", key: "D" },
-    { type: "hihatOpen", label: "OPEN HH", emoji: "🛎️", color: "#f59e0b", key: "F" },
-    { type: "clap", label: "CLAP", emoji: "👏", color: "#f97316", key: "G" },
-    { type: "tom1", label: "TOM 1", emoji: "🪘", color: "#8b5cf6", key: "H" },
-    { type: "tom2", label: "TOM 2", emoji: "🪘", color: "#a855f7", key: "J" },
-    { type: "crash", label: "CRASH", emoji: "💥", color: "#ef4444", key: "K" },
-    { type: "ride", label: "RIDE", emoji: "🎵", color: "#14b8a6", key: "L" },
+const PAD_CONFIG: { type: DrumType; label: string; icon: any; color: string; key: string }[] = [
+    { type: "kick", label: "KICK", icon: Circle, color: "#ec4899", key: "A" },
+    { type: "snare", label: "SNARE", icon: Triangle, color: "#3b82f6", key: "S" },
+    { type: "hihat", label: "HI-HAT", icon: Hexagon, color: "#fbbf24", key: "D" },
+    { type: "hihatOpen", label: "OPEN HH", icon: Octagon, color: "#f59e0b", key: "F" },
+    { type: "clap", label: "CLAP", icon: Zap, color: "#f97316", key: "G" },
+    { type: "tom1", label: "TOM 1", icon: Square, color: "#8b5cf6", key: "H" },
+    { type: "tom2", label: "TOM 2", icon: Square, color: "#a855f7", key: "J" },
+    { type: "crash", label: "CRASH", icon: Star, color: "#ef4444", key: "K" },
+    { type: "ride", label: "RIDE", icon: Disc, color: "#14b8a6", key: "L" },
 ];
 
 // Roll grid colors
-const DRUM_INFO: Record<DrumType, { label: string; color: string }> = {
-    kick: { label: "KICK", color: "#ec4899" },
-    snare: { label: "SNR", color: "#3b82f6" },
-    hihat: { label: "HH", color: "#fbbf24" },
-    hihatOpen: { label: "OH", color: "#f59e0b" },
-    clap: { label: "CLAP", color: "#f97316" },
-    tom1: { label: "T1", color: "#8b5cf6" },
-    tom2: { label: "T2", color: "#a855f7" },
-    crash: { label: "CRS", color: "#ef4444" },
-    ride: { label: "RDE", color: "#14b8a6" },
+const DRUM_INFO: Record<DrumType, { label: string; label_short: string; color: string }> = {
+    kick: { label: "Kick", label_short: "KICK", color: "#ec4899" },
+    snare: { label: "Snare", label_short: "SNR", color: "#3b82f6" },
+    hihat: { label: "Hi-Hat", label_short: "HH", color: "#fbbf24" },
+    hihatOpen: { label: "Hi-Hat (O)", label_short: "OH", color: "#f59e0b" },
+    clap: { label: "Clap", label_short: "CLAP", color: "#f97316" },
+    tom1: { label: "Tom 1", label_short: "T1", color: "#8b5cf6" },
+    tom2: { label: "Tom 2", label_short: "T2", color: "#a855f7" },
+    crash: { label: "Crash", label_short: "CRS", color: "#ef4444" },
+    ride: { label: "Ride", label_short: "RDE", color: "#14b8a6" },
 };
 
 const STEPS = 16;
@@ -224,15 +228,22 @@ export function Drums() {
                                 whileTap={{ scale: 0.85 }}
                                 whileHover={{ scale: 1.05 }}
                                 onPointerDown={() => handleHit(pad.type)}
-                                className="aspect-square rounded-xl flex flex-col items-center justify-center gap-1 shadow-lg transition-all select-none border-2 relative"
+                                className="aspect-square rounded-xl flex flex-col items-center justify-center gap-1 shadow-lg transition-all select-none border-2 relative bg-surface border-border overflow-hidden"
                                 style={{
-                                    backgroundColor: hitDrum === pad.type ? pad.color : 'var(--surface)',
                                     borderColor: hitDrum === pad.type ? pad.color : 'var(--border)',
                                     boxShadow: hitDrum === pad.type ? `0 0 20px ${pad.color}` : undefined,
                                 }}
                             >
-                                <span className="text-xl">{pad.emoji}</span>
-                                <span className="text-[9px] font-bold opacity-80">{pad.label}</span>
+                                <div className="absolute inset-0 opacity-10" style={{ backgroundColor: pad.color }} />
+                                <pad.icon
+                                    size={32}
+                                    style={{
+                                        color: pad.color,
+                                        fill: hitDrum === pad.type ? pad.color : 'transparent',
+                                        strokeWidth: 1.5
+                                    }}
+                                />
+                                <span className="text-[9px] font-bold opacity-80 mt-1">{pad.label}</span>
                                 <span className="absolute bottom-1 right-1 text-[8px] opacity-40 font-mono">{pad.key}</span>
                             </motion.button>
                         ))}
@@ -248,7 +259,7 @@ export function Drums() {
                         exit={{ opacity: 0, x: -20 }}
                         className="relative w-full"
                     >
-                        <div className="relative w-full aspect-2/1 min-h-[180px] max-h-[240px] bg-linear-to-b from-surface/30 to-background rounded-xl border border-border overflow-hidden">
+                        <div className="relative w-full aspect-2/1 min-h-48 max-h-80 bg-linear-to-b from-surface/30 to-background rounded-xl border border-border overflow-hidden">
                             <div className="absolute bottom-0 left-0 right-0 h-3 bg-linear-to-t from-border/30 to-transparent" />
                             {DRUM_TYPES.map((type) => {
                                 const pos = SET_LAYOUT[type];
@@ -262,7 +273,7 @@ export function Drums() {
                                         className="absolute rounded-full flex flex-col items-center justify-center font-bold text-white cursor-pointer border-2 border-white/20"
                                         style={{
                                             left: `${pos.x}%`,
-                                            top: `${pos.y}%`,
+                                            top: `${pos.y - 12}%`,
                                             width: `${pos.size}%`,
                                             aspectRatio: '1',
                                             transform: 'translate(-50%, -50%)',
@@ -287,8 +298,9 @@ export function Drums() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
-                        className="w-full"
+                        className="w-full "
                     >
+
                         {/* Pattern Controls */}
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
                             <input
@@ -301,44 +313,20 @@ export function Drums() {
                             <button
                                 onClick={savePattern}
                                 disabled={!patternName.trim()}
-                                className="px-2 py-1 text-[10px] font-bold bg-primary text-primary-foreground rounded disabled:opacity-50"
+                                className="px-2 py-1 text-[10px] font-bold bg-primary text-primary-foreground rounded disabled:opacity-50 flex items-center gap-1"
                             >
-                                Save
+                                <Save size={12} /> Save
                             </button>
                             <button
                                 onClick={clearGrid}
-                                className="px-2 py-1 text-[10px] font-bold text-destructive border border-destructive/30 rounded hover:bg-destructive/10"
+                                className="px-2 py-1 text-[10px] font-bold text-destructive border border-destructive/30 rounded hover:bg-destructive/10 flex items-center gap-1"
                             >
-                                Clear
+                                <Trash2 size={12} /> Clear
                             </button>
                             <span className="text-xs opacity-50 font-mono ml-auto">
                                 Step {playheadPos + 1}/{STEPS}
                             </span>
                         </div>
-
-                        {/* Saved Patterns List */}
-                        {patterns.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mb-2">
-                                {patterns.map(p => (
-                                    <div
-                                        key={p.id}
-                                        onClick={() => loadPattern(p.id)}
-                                        className={`flex items-center gap-1 px-2 py-1 rounded border cursor-pointer hover:bg-surface-hover ${currentPatternId === p.id
-                                                ? "bg-primary/20 border-primary"
-                                                : "bg-surface border-border"
-                                            }`}
-                                    >
-                                        <span className="text-[10px] font-bold">{p.name}</span>
-                                        <button
-                                            onClick={(e) => deletePattern(p.id, e)}
-                                            className="w-3 h-3 flex items-center justify-center rounded-full hover:bg-destructive/20 hover:text-destructive text-[8px]"
-                                        >
-                                            ×
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
 
                         <div className="bg-surface/30 rounded-lg border border-border p-2 overflow-x-auto">
                             <table className="w-full border-collapse">
@@ -388,13 +376,40 @@ export function Drums() {
                                 </tbody>
                             </table>
                         </div>
+
+                        <div className="text-[9px] opacity-40 text-center mt-2">
+                            Press A-L to play drums
+                        </div>
+
+                        {/* Saved Patterns List */}
+                        {patterns.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mb-2">
+                                {patterns.map(p => (
+                                    <div
+                                        key={p.id}
+                                        onClick={() => loadPattern(p.id)}
+                                        className={`flex items-center gap-1 px-2 py-1 rounded border cursor-pointer hover:bg-surface-hover ${currentPatternId === p.id
+                                            ? "bg-primary/20 border-primary"
+                                            : "bg-surface border-border"
+                                            }`}
+                                    >
+                                        <span className="text-[10px] font-bold">{p.name}</span>
+                                        <button
+                                            onClick={(e) => deletePattern(p.id, e)}
+                                            className="w-3 h-3 flex items-center justify-center rounded-full hover:bg-destructive/20 hover:text-destructive"
+                                            aria-label="Delete pattern"
+                                        >
+                                            <X size={8} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            <div className="text-[9px] opacity-40 text-center mt-2">
-                Press A-L to play drums
-            </div>
+
         </div>
     );
 }
