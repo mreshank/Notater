@@ -5,16 +5,42 @@
  */
 import * as Tone from "tone";
 
-export type SynthPreset = "basic" | "bass" | "lead" | "pad" | "pluck" | "retro" | "bell" | "fat" | "dark";
+export type SynthPreset = "basic" | "bass" | "lead" | "pad" | "pluck" | "retro" | "bell" | "fat" | "dark" | "keys" | "strings";
 
+/**
+ * Create a synth with the given preset
+ */
 /**
  * Create a synth with the given preset
  */
 export function createSynth(preset: SynthPreset = "basic"): Tone.PolySynth {
   const synth = new Tone.PolySynth(Tone.Synth);
-  
-  // Apply preset settings
+  applyPreset(synth, preset);
+  return synth;
+}
+
+/**
+ * Apply a preset to an existing synth instance
+ */
+export function applyPreset(synth: Tone.PolySynth, preset: SynthPreset) {
+  // Release all notes to prevent stuck buffer when changing settings drastically
+  synth.releaseAll();
+
   switch (preset) {
+    case "keys":
+      // Close to an Electric Piano: FM or Triangle with specific envelope
+      synth.set({
+        oscillator: { type: "triangle" as const },
+        envelope: { attack: 0.005, decay: 0.3, sustain: 0.2, release: 0.4 },
+      });
+      break;
+    case "strings":
+      // Slow attack saw/pwm
+      synth.set({
+        oscillator: { type: "pwm" as const, modulationFrequency: 0.4 },
+        envelope: { attack: 0.6, decay: 0.5, sustain: 0.8, release: 2.5 },
+      });
+      break;
     case "bass":
       synth.set({
         oscillator: { type: "sawtooth" as const },
@@ -47,16 +73,12 @@ export function createSynth(preset: SynthPreset = "basic"): Tone.PolySynth {
       break;
     case "bell":
       synth.set({
-        oscillator: { type: "sine" as const }, // FM simplified to just simple sine here, or maybe complex
-        // For simple FM, Tone.Synth supports AM/FM but PolySynth<Synth> is simpler.
-        // Let's stick to simple sine with specific envelope for bell-like sound
+        oscillator: { type: "sine" as const }, 
         envelope: { attack: 0.001, decay: 1.0, sustain: 0.0, release: 1.5 },
       });
       break;
     case "fat":
-      // "Fat" usually implies detuned saws. Standard Tone.Synth is mono-osc.
-      // We can use "fatsawtooth" if available or just a nice saw.
-      // Tone.js oscillators support "fatsawtooth"
+      // Explicit cast to satisfy Tone types for special oscillators
       synth.set({
         oscillator: { type: "fatsawtooth" as any, count: 3, spread: 20 },
         envelope: { attack: 0.02, decay: 0.1, sustain: 0.7, release: 0.5 },
@@ -76,8 +98,6 @@ export function createSynth(preset: SynthPreset = "basic"): Tone.PolySynth {
       });
       break;
   }
-  
-  return synth;
 }
 
 /**

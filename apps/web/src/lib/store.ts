@@ -8,6 +8,7 @@ import {
   createSynth,
   createEffectsChain,
   type SynthPreset,
+  applyPreset,
 } from "./audio";
 import { 
     initLooper, startRecording, stopRecording, playLoop as audioPlayLoop, stopLoop as audioStopLoop, clearLoop as audioClearLoop, setLoopVolume, muteLoop 
@@ -343,14 +344,12 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   setSynthPreset: (preset) => {
-    if (globalSynth && globalEffects) {
-      // Release old synth
-      globalSynth.disconnect();
-      globalSynth.dispose();
-      
-      // Create new one
-      globalSynth = createSynth(preset);
-      globalSynth.connect(globalEffects.distortion);
+    if (globalSynth) {
+      // Apply preset to existing synth
+      applyPreset(globalSynth, preset);
+    } else {
+       // Should not happen if initialized, but fall back
+       // (Lazy init will handle it later if null)
     }
     set({ synthPreset: preset });
   },
@@ -577,6 +576,18 @@ export const useStore = create<AppState>((set, get) => ({
             globalSynth = createSynth(data.synthPreset);
             globalSynth.connect(globalEffects.delay);
         }
+
+        // Broadcast change to peers
+        p2p.broadcast({ 
+            type: "FULL_SYNC", 
+            data: {
+                project: get().project,
+                sequencerGrid: get().sequencerGrid,
+                mixer: get().mixer,
+                synthPreset: get().synthPreset
+            }
+        });
+        p2p.broadcastLog(`Host loaded project: ${p.name}`);
       }
     } catch (e) {
       console.error("Failed to load project", e);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { ClerkProvider } from "@clerk/nextjs";
+import { ClerkProvider, useAuth } from "@clerk/nextjs";
 import { dark, neobrutalism } from "@clerk/themes";
 import { useStore } from "@/lib/store";
 import { ToastProvider } from "@/components/ui/ToastProvider";
@@ -11,7 +11,6 @@ import { GoogleDriveScript } from "@/components/GoogleDriveScript";
 
 export function Providers({ children }: { children: React.ReactNode }) {
     const theme = useStore((state) => state.theme);
-
     // Sync theme with DOM
     useEffect(() => {
         const root = document.documentElement;
@@ -54,6 +53,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
     return (
         <ClerkProvider appearance={getClerkAppearance()}>
+            <SyncManager />
             <GoogleDriveScript />
             <ToastProvider>
                 <ModalProvider>
@@ -63,4 +63,36 @@ export function Providers({ children }: { children: React.ReactNode }) {
             </ToastProvider>
         </ClerkProvider>
     );
+}
+
+function SyncManager() {
+    const { isSignedIn } = useAuth();
+    const { project } = useStore();
+    const { saveProject } = useStore();
+
+    useEffect(() => {
+        if (!isSignedIn || !project?.id) return;
+
+        import("@/lib/cloud-sync").then(({ saveAndPushToCloud }) => {
+            // 1. Interval Sync (every 5 minutes)
+            const intervalId = setInterval(async () => {
+                await saveProject(); // Save to DB first
+                saveAndPushToCloud(project.id);
+            }, 5 * 60 * 1000);
+
+            // 2. Sync on Exit (visible/unload)
+            const handleUnload = () => {
+                saveAndPushToCloud(project.id, { keepalive: true });
+            };
+
+            window.addEventListener("beforeunload", handleUnload);
+
+            return () => {
+                clearInterval(intervalId);
+                window.removeEventListener("beforeunload", handleUnload);
+            };
+        });
+    }, [isSignedIn, project?.id, saveProject]);
+
+    return null;
 }

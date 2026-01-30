@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { SignInButton, UserButton, SignedIn, SignedOut, useAuth } from "@clerk/nextjs";
 import {
-    FolderOpen, Download, Cloud, CloudUpload, CloudDownload,
+    FolderOpen, Download, CloudUpload, CloudDownload,
     Share2, Radio, HardDrive, FileAudio, Package, Menu, LogIn, ExternalLink, Copy, Check, Loader2, RefreshCw
 } from "lucide-react";
 import { useToast } from "./ui/ToastProvider";
@@ -271,14 +271,13 @@ export function ProjectControl() {
                             {/* Tabs */}
                             <div className="flex border-b border-border p-1 gap-1">
                                 {[
-                                    { id: 'local', icon: HardDrive, label: 'Local Projects' },
-                                    { id: 'cloud', icon: Cloud, label: 'Cloud Sync' },
-                                    { id: 'drive', icon: ExternalLink, label: 'Google Drive' }, // Drive icon
+                                    { id: 'local', icon: HardDrive, label: 'Projects' },
+                                    { id: 'drive', icon: ExternalLink, label: 'Google Drive' },
                                     { id: 'p2p', icon: Radio, label: 'P2P Session' },
                                 ].map(tab => (
                                     <button
                                         key={tab.id}
-                                        onClick={() => setActiveTab(tab.id as any)}
+                                        onClick={() => setActiveTab(tab.id as 'local' | 'drive' | 'p2p')}
                                         className={`flex-1 flex items-center justify-center p-2 rounded-lg transition-all ${activeTab === tab.id
                                             ? "bg-background shadow-sm text-primary"
                                             : "hover:bg-background/50 text-muted-foreground"
@@ -318,6 +317,40 @@ export function ProjectControl() {
                                             <span>Import Package</span>
                                         </button>
 
+                                        {/* CLOUD SYNC SECTION */}
+                                        <div className="h-px bg-border my-2" />
+                                        <div className="text-xs font-bold text-muted-foreground px-2 py-1 mb-1 flex justify-between items-center">
+                                            <span>CLOUD SYNC</span>
+                                            {!isSignedIn && (
+                                                <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded">Not Signed In</span>
+                                            )}
+                                        </div>
+
+                                        {!isSignedIn ? (
+                                            <SignInButton mode="modal">
+                                                <button className="w-full py-2 mb-1 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-xs font-bold transition-colors">
+                                                    Sign In to Sync
+                                                </button>
+                                            </SignInButton>
+                                        ) : (
+                                            <div className="flex justify-center gap-2">
+                                                <button
+                                                    onClick={handleSyncPull}
+                                                    className="flex-1 w-full text-left px-3 py-2 bg-primary text-primary-foreground hover:opacity-90 rounded-lg text-sm flex items-center gap-3 shadow-sm cursor-pointer"
+                                                >
+                                                    <CloudDownload size={16} />
+                                                    <span className="font-semibold">Pull from Cloud</span>
+                                                </button>
+                                                <button
+                                                    onClick={handleSyncPush}
+                                                    className="flex-0 w-full text-left px-3 py-2 bg-secondary hover:bg-secondary/80 text-muted-foreground hover:text-foreground rounded-lg text-xs flex items-center gap-3 transition-colors cursor-pointer"
+                                                >
+                                                    <CloudUpload size={16} />
+                                                    {/* <span>Push to Cloud</span> */}
+                                                </button>
+                                            </div>
+                                        )}
+
                                         <div className="h-px bg-border my-2" />
                                         <div className="text-xs font-bold text-muted-foreground px-2 py-1 mb-1">SAVED PROJECTS</div>
                                         <div className="max-h-48 overflow-y-auto pr-1 custom-scrollbar">
@@ -344,39 +377,6 @@ export function ProjectControl() {
                                                 ))
                                             )}
                                         </div>
-                                    </div>
-                                )}
-
-                                {/* CLOUD TAB */}
-                                {activeTab === 'cloud' && (
-                                    <div className="space-y-1">
-                                        {!isSignedIn ? (
-                                            <div className="p-4 text-center">
-                                                <p className="text-xs text-muted-foreground mb-4">Sign in to sync projects</p>
-                                                <SignInButton mode="modal">
-                                                    <button className="w-full py-2 bg-primary text-primary-foreground rounded-lg text-xs font-bold">
-                                                        Sign In
-                                                    </button>
-                                                </SignInButton>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <button
-                                                    onClick={handleSyncPush}
-                                                    className="w-full text-left px-3 py-2 hover:bg-background rounded-lg text-sm flex items-center gap-3"
-                                                >
-                                                    <CloudUpload size={16} className="text-purple-500" />
-                                                    <span>Push to Cloud</span>
-                                                </button>
-                                                <button
-                                                    onClick={handleSyncPull}
-                                                    className="w-full text-left px-3 py-2 hover:bg-background rounded-lg text-sm flex items-center gap-3"
-                                                >
-                                                    <CloudDownload size={16} className="text-cyan-500" />
-                                                    <span>Pull from Cloud</span>
-                                                </button>
-                                            </>
-                                        )}
                                     </div>
                                 )}
 

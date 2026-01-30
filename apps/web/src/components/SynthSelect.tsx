@@ -14,6 +14,8 @@ const PRESETS: { id: SynthPreset; label: string; color: string }[] = [
     { id: "bell", label: "Bell", color: "bg-pink-500" },
     { id: "fat", label: "Fat", color: "bg-indigo-500" },
     { id: "dark", label: "Dark", color: "bg-slate-700" },
+    { id: "keys", label: "Keys", color: "bg-teal-500" },
+    { id: "strings", label: "Strings", color: "bg-rose-500" },
 ];
 
 export function SynthSelect() {

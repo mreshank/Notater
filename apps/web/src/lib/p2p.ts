@@ -1,3 +1,4 @@
+import { toast } from "sonner"; // Import sonner
 import Peer, { DataConnection } from "peerjs";
 import { useStore } from "./store";
 
@@ -13,7 +14,8 @@ type SyncMessage =
     | { type: "SEQUENCER_UPDATE"; rowId: string; step: number }
     | { type: "MIXER_UPDATE"; trackId: string; field: string; value: number | boolean }
     | { type: "TRANSPORT"; playing: boolean }
-    | { type: "BPM"; bpm: number };
+    | { type: "BPM"; bpm: number }
+    | { type: "EVENT_LOG"; message: string }; // New Type
 
 class P2PManager {
     peer: Peer | null = null;
@@ -53,6 +55,10 @@ class P2PManager {
         this.connections.push(conn);
         
         conn.on("open", () => {
+             // Notify connection
+             toast.success(`Connected to peer: ${conn.peer.slice(0, 5)}...`);
+             this.broadcastLog(`Peer ${this.myId.slice(0, 5)}... joined.`);
+
             console.log("Connected to:", conn.peer);
             
             // If I am host, send full sync immediately
@@ -75,6 +81,7 @@ class P2PManager {
         conn.on("close", () => {
             this.connections = this.connections.filter(c => c !== conn);
             console.log("Connection closed:", conn.peer);
+            toast.info(`Peer disconnected: ${conn.peer.slice(0, 5)}...`);
         });
     }
 
@@ -82,6 +89,10 @@ class P2PManager {
         this.connections.forEach(conn => {
             if (conn.open) conn.send(msg);
         });
+    }
+
+    broadcastLog(message: string) {
+        this.broadcast({ type: "EVENT_LOG", message });
     }
 
     private handleMessage(msg: SyncMessage) {
@@ -100,6 +111,7 @@ class P2PManager {
                     mixer: msg.data.mixer,
                     synthPreset: msg.data.synthPreset
                 });
+                toast.success("Received Full Project Sync");
                 break;
             case "SEQUENCER_UPDATE":
                 // toggleSequencerStep toggles, so we must be careful.
@@ -114,9 +126,14 @@ class P2PManager {
                 break;
             case "TRANSPORT":
                 if (msg.playing !== store.isPlaying) store.togglePlay();
+                toast.info(`Peer ${msg.playing ? "started" : "stopped"} playback`);
                 break;
             case "BPM":
                 store.setBpm(msg.bpm);
+                toast.info(`Peer set BPM to ${msg.bpm}`);
+                break;
+            case "EVENT_LOG":
+                toast.info(msg.message, { icon: "📡" });
                 break;
         }
     }
