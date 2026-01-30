@@ -3,10 +3,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { playDrum, DrumType, DRUM_TYPES, setDrumKit, DrumKit, DRUM_KITS } from "@/lib/audio/drums";
 import { useStore } from "@/lib/store";
-import {
-    Circle, Triangle, Square, Hexagon, Octagon, Star, Disc, Zap,
-    Save, Trash2, X
-} from "lucide-react";
+import { LucideIcon, Circle, Triangle, Square, Hexagon, Octagon, Star, Disc, Zap, Save, Trash2, X } from "lucide-react";
 
 type DrumMode = "pad" | "set" | "roll";
 
@@ -37,7 +34,7 @@ const SET_LAYOUT: Record<DrumType, { x: number; y: number; size: number; label: 
 };
 
 // Pad config
-const PAD_CONFIG: { type: DrumType; label: string; icon: any; color: string; key: string }[] = [
+const PAD_CONFIG: { type: DrumType; label: string; icon: LucideIcon; color: string; key: string }[] = [
     { type: "kick", label: "KICK", icon: Circle, color: "#ec4899", key: "A" },
     { type: "snare", label: "SNARE", icon: Triangle, color: "#3b82f6", key: "S" },
     { type: "hihat", label: "HI-HAT", icon: Hexagon, color: "#fbbf24", key: "D" },

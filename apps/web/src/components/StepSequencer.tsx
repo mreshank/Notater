@@ -184,7 +184,7 @@ export function StepSequencer() {
                         </div>
 
                         {/* Steps */}
-                        <div className="flex gap-0.5 flex-1">
+                        <div className="flex gap-1 flex-1">
                             {grid[row.id]?.map((isActive, stepIndex) => (
                                 <motion.button
                                     key={stepIndex}

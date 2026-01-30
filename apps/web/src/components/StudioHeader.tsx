@@ -95,7 +95,7 @@ export function StudioHeader() {
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-6">
                     <div className="relative flex items-center gap-4 bg-muted/30 px-2 py-0.5 rounded-full border border-border/50 backdrop-blur-sm overflow-hidden">
                         {/* Visualizer Scope (Global) */}
-                        <div className="hidden absolute z-0 -translate-x-2 translate-y-2 md:flex items-end gap-0.5 h-8 w-full opacity-50">
+                        <div className="hidden absolute z-0 pointer-events-none -translate-x-2 translate-y-2 md:flex items-end gap-0.5 h-8 w-full opacity-50">
                             {/* Static CSS animation for now as requested "Oscilloscope" placeholder */}
                             {[...Array(20)].map((_, i) => (
                                 <div
@@ -120,7 +120,7 @@ export function StudioHeader() {
 
                         <button
                             onClick={togglePlay}
-                            className={`w-10 h-10 flex items-center justify-center rounded-full bg-primary text-primary-foreground hover:opacity-90 transition-all ${isPlaying ? "shadow-lg shadow-primary/40 scale-105" : ""
+                            className={`w-10 h-10 z-10 flex items-center justify-center rounded-full bg-primary text-primary-foreground hover:opacity-90 transition-all ${isPlaying ? "shadow-lg shadow-primary/40 scale-105" : ""
                                 }`}
                             title={isPlaying ? "Pause" : "Play"}
                         >

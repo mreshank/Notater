@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { Track, Step } from "notater";
 import * as Tone from "tone";
 import { 
   initAudio, 
@@ -125,7 +124,7 @@ interface AppState {
   looper: Record<string, LoopTrack>;
   
   // Actions
-  setSynthParam: (param: keyof SynthParams, value: any) => void;
+  setSynthParam: <K extends keyof SynthParams>(param: K, value: SynthParams[K]) => void;
   isLoading: boolean;
   currentTool: "pointer" | "pencil" | "eraser";
 
@@ -381,13 +380,14 @@ export const useStore = create<AppState>((set, get) => ({
     
     if (globalSynth) {
         if (param === "oscillatorType") {
+             // eslint-disable-next-line @typescript-eslint/no-explicit-any
              globalSynth.set({ oscillator: { type: value as any } });
         } else if (["attack", "decay", "sustain", "release"].includes(param)) {
              // Grab fresh state for full envelope update
              const s = get().synthParams;
              globalSynth.set({ envelope: { attack: s.attack, decay: s.decay, sustain: s.sustain, release: s.release } });
         } else if (param === "detune") {
-             globalSynth.set({ detune: value });
+             globalSynth.set({ detune: value as number });
         }
     }
   },

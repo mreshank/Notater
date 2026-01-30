@@ -9,16 +9,16 @@ test('loads studio and plays', async ({ page }) => {
   await page.goto('/studio');
   
   // Wait for loading to finish
-  await expect(page.getByText('Ready')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'PLAY' })).toBeVisible();
   
   // Toggle Play
   const playButton = page.getByRole('button', { name: 'PLAY' });
   await playButton.click();
   
-  await expect(page.getByRole('button', { name: 'STOP' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
   
   // Toggle Stop
-  await page.getByRole('button', { name: 'STOP' }).click();
+  await page.getByRole('button', { name: 'Pause' }).click();
   await expect(playButton).toBeVisible();
 });
 

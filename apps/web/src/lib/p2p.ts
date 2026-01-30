@@ -1,8 +1,15 @@
 import Peer, { DataConnection } from "peerjs";
 import { useStore } from "./store";
 
+interface SyncState {
+    project: ReturnType<typeof useStore.getState>['project'];
+    sequencerGrid: ReturnType<typeof useStore.getState>['sequencerGrid'];
+    mixer: ReturnType<typeof useStore.getState>['mixer'];
+    synthPreset: ReturnType<typeof useStore.getState>['synthPreset'];
+}
+
 type SyncMessage = 
-    | { type: "FULL_SYNC"; data: any }
+    | { type: "FULL_SYNC"; data: SyncState }
     | { type: "SEQUENCER_UPDATE"; rowId: string; step: number }
     | { type: "MIXER_UPDATE"; trackId: string; field: string; value: number | boolean }
     | { type: "TRANSPORT"; playing: boolean }
@@ -61,7 +68,7 @@ class P2PManager {
             }
         });
 
-        conn.on("data", (data: any) => {
+        conn.on("data", (data: unknown) => {
             this.handleMessage(data as SyncMessage);
         });
 

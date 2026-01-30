@@ -3,8 +3,8 @@
   "version": "0.1.1",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "npx prisma generate && next build --webpack",
+    "dev": "next dev --port 6951 --verbose --debug --loglevel debug --trace",
+    "build": "npx prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "db:push": "prisma db push",

@@ -9,7 +9,7 @@ import {
 // Helpers
 const KEYS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
-const OSCILLATORS = [
+const OSCILLATORS: { type: SynthParams['oscillatorType']; label: string }[] = [
     { type: "triangle", label: "TRI" },
     { type: "sine", label: "SINE" },
     { type: "square", label: "SQR" },
