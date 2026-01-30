@@ -81,6 +81,86 @@
   --radius: 0px;
 }
 
+[data-theme='forest'] {
+  /* Theme: FOREST (Nature, calm, greens) */
+  --background: #052e16;
+  --foreground: #ecfdf5;
+  --surface: #064e3b;
+  --surface-hover: #065f46;
+  --primary: #34d399;
+  --primary-foreground: #022c22;
+  --secondary: #10b981;
+  --secondary-foreground: #ffffff;
+  --accent: #f59e0b;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #047857;
+  --input: #047857;
+  --ring: #34d399;
+  --radius: 0.5rem;
+}
+
+[data-theme='ocean'] {
+  /* Theme: OCEAN (Deep Blue, calm) */
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  --surface: #1e293b;
+  --surface-hover: #334155;
+  --primary: #38bdf8;
+  --primary-foreground: #0c4a6e;
+  --secondary: #818cf8;
+  --secondary-foreground: #ffffff;
+  --accent: #22d3ee;
+  --accent-foreground: #083344;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #38bdf8;
+  --radius: 0.5rem;
+}
+
+[data-theme='sunset'] {
+  /* Theme: SUNSET (Warm, gradient vibes) */
+  --background: #2a0a18;
+  --foreground: #fff1f2;
+  --surface: #4c1d2f;
+  --surface-hover: #63243c;
+  --primary: #fb7185;
+  --primary-foreground: #4c0519;
+  --secondary: #f472b6;
+  --secondary-foreground: #ffffff;
+  --accent: #fda4af;
+  --accent-foreground: #4c0519;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #831843;
+  --input: #831843;
+  --ring: #fb7185;
+  --radius: 0.75rem;
+}
+
+[data-theme='midnight'] {
+  /* Theme: MIDNIGHT (Clean, modern dark) */
+  --background: #020617;
+  --foreground: #f8fafc;
+  --surface: #0f172a;
+  --surface-hover: #1e293b;
+  --primary: #6366f1;
+  --primary-foreground: #ffffff;
+  --secondary: #64748b;
+  --secondary-foreground: #ffffff;
+  --accent: #a855f7;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #6366f1;
+  --radius: 0.5rem;
+}
+
 body {
   background-color: var(--background);
   color: var(--foreground);

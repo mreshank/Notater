@@ -1,10 +1,7 @@
 import { Inter, JetBrains_Mono } from "next/font/google";
-import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
-import { GoogleDriveScript } from "@/components/GoogleDriveScript";
-import { ToastProvider } from "@/components/ui/ToastProvider";
-import { ModalProvider } from "@/components/ui/ModalProvider";
+import { Providers } from "@/components/Providers";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -18,8 +15,6 @@ const jetbrains = JetBrains_Mono({
 
 export { metadata, viewport } from "./layout-metadata";
 
-import { Toaster } from "sonner";
-
 // ...
 
 export default function RootLayout({
@@ -28,22 +23,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
-      <html lang="en" data-theme="cyber">
-        <body
-          className={`${inter.variable} ${jetbrains.variable} antialiased h-screen w-screen overflow-hidden touch-none`}
-        >
-          <GoogleDriveScript />
-          <ToastProvider>
-            <ModalProvider>
-              <div id="root" className="h-full w-full flex flex-col">
-                {children}
-              </div>
-            </ModalProvider>
-            <Toaster theme="dark" position="bottom-right" richColors />
-          </ToastProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${inter.variable} ${jetbrains.variable} antialiased h-screen w-screen overflow-hidden touch-none`}
+      >
+        <Providers>
+          <div id="root" className="h-full w-full flex flex-col">
+            {children}
+          </div>
+        </Providers>
+      </body>
+    </html>
   );
 }

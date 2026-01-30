@@ -3,8 +3,8 @@
 import { useStore } from "@/lib/store";
 import {
     Play, Pause, Square, Circle, Save, Download,
-    Music, FileText, Moon, Sun,
-    ChevronLeft, ChevronRight, Loader2
+    Music, FileText, Moon, Sun, Trees, Waves, Sunset, MoonStar, Zap,
+    ChevronLeft, ChevronRight, Loader2, XIcon
 } from "lucide-react";
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -211,11 +211,18 @@ export function StudioHeader() {
                             className="p-2 rounded-full hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-all active:scale-95 border border-transparent hover:border-border/50"
                             title="Left Click: Toggle Mode | Right Click: Theme Menu"
                         >
-                            {theme === 'cyber' ? (
-                                <Moon size={18} className="fill-current text-indigo-400" />
-                            ) : (
-                                <Sun size={18} className="fill-current text-amber-500" />
-                            )}
+                            {(() => {
+                                switch (theme) {
+                                    case 'cyber': return <Moon size={18} className="fill-current text-indigo-400" />;
+                                    case 'lofi': return <Sun size={18} className="fill-current text-amber-500" />;
+                                    case 'neo': return <Zap size={18} className="fill-current text-cyan-500" />;
+                                    case 'forest': return <Trees size={18} className="text-emerald-500" />;
+                                    case 'ocean': return <Waves size={18} className="text-blue-500" />;
+                                    case 'sunset': return <Sunset size={18} className="text-orange-500" />;
+                                    case 'midnight': return <MoonStar size={18} className="text-indigo-300" />;
+                                    default: return <Sun size={18} className="fill-current text-amber-500" />;
+                                }
+                            })()}
                         </button>
 
                         <AnimatePresence>
@@ -271,7 +278,7 @@ export function StudioHeader() {
                                     <FileText size={14} className="text-primary" />
                                     Project Notes
                                 </h3>
-                                <span className="text-[10px] text-muted-foreground">Markdown supported</span>
+                                <span className="text-[10px] text-muted-foreground">Markdown supported <XIcon size={14} className="text-primary ml-4 cursor-pointer" onClick={() => setShowNotes(false)} /></span>
                             </div>
                             <textarea
                                 value={project.notes || ""}
