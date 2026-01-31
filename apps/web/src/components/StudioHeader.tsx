@@ -92,8 +92,8 @@ export function StudioHeader() {
                 </div>
 
                 {/* Center: Transport & Scope */}
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-6">
-                    <div className="relative flex items-center gap-4 bg-muted/30 px-2 py-0.5 rounded-full border border-border/50 backdrop-blur-sm overflow-hidden">
+                <div className="flex-1 flex justify-center items-center gap-6 mx-4">
+                    <div className="relative flex items-center gap-4 bg-muted/30 px-2 py-0.5 rounded-full border border-border/50 backdrop-blur-sm overflow-hidden shrink-0">
                         {/* Visualizer Scope (Global) */}
                         <div className="hidden absolute z-0 pointer-events-none -translate-x-2 translate-y-2 md:flex items-end gap-0.5 h-8 w-full opacity-50">
                             {/* Static CSS animation for now as requested "Oscilloscope" placeholder */}
@@ -141,7 +141,7 @@ export function StudioHeader() {
                 {/* Right: Controls & Settings */}
                 <div className="flex items-center gap-3">
                     {/* BPM Control */}
-                    <div className="group relative flex items-center bg-muted/40 hover:bg-muted/60 border border-border/50 rounded-lg p-0.5 transition-all focus-within:ring-1 focus-within:ring-primary/50 focus-within:bg-background/80">
+                    <div className="hidden md:flex group relative items-center bg-muted/40 hover:bg-muted/60 border border-border/50 rounded-lg p-0.5 transition-all focus-within:ring-1 focus-within:ring-primary/50 focus-within:bg-background/80">
                         <button
                             onClick={() => setBpm(Math.max(15, Math.floor((project.bpm - 5) / 5) * 5))}
                             className="p-1 hover:bg-background/50 rounded-md text-muted-foreground hover:text-foreground transition-colors"
@@ -171,7 +171,7 @@ export function StudioHeader() {
                     </div>
 
                     {/* Bars Control */}
-                    <div className="group relative flex items-center bg-muted/40 hover:bg-muted/60 border border-border/50 rounded-lg p-0.5 transition-all focus-within:ring-1 focus-within:ring-primary/50 focus-within:bg-background/80">
+                    <div className="hidden md:flex group relative items-center bg-muted/40 hover:bg-muted/60 border border-border/50 rounded-lg p-0.5 transition-all focus-within:ring-1 focus-within:ring-primary/50 focus-within:bg-background/80">
                         <button
                             onClick={() => {
                                 const options = [1, 2, 4, 8, 16];
@@ -198,7 +198,7 @@ export function StudioHeader() {
                         </button>
                     </div>
 
-                    <div className="h-5 w-px bg-border/50 hidden sm:block mx-1"></div>
+                    <div className="hidden sm:block h-5 w-px bg-border/50 mx-1"></div>
 
                     {/* Theme Toggle & Menu */}
                     <div className="relative">
@@ -257,7 +257,7 @@ export function StudioHeader() {
                         </AnimatePresence>
                     </div>
 
-                    <div className="h-5 w-px bg-border/50 hidden sm:block mx-1"></div>
+                    <div className="hidden sm:block h-5 w-px bg-border/50 mx-1"></div>
 
                     {/* Main Menu (Replaced by ProjectControl) */}
                     <ProjectControl />
@@ -271,14 +271,14 @@ export function StudioHeader() {
                             initial={{ opacity: 0, y: -20, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                            className="absolute top-16 right-4 w-80 bg-background/95 backdrop-blur-xl border border-border shadow-2xl rounded-xl z-50 p-4 flex flex-col gap-2"
+                            className="absolute top-16 right-4 w-[90vw] max-w-sm bg-background/95 backdrop-blur-xl border border-border shadow-2xl rounded-xl z-50 p-4 flex flex-col gap-2"
                         >
                             <div className="flex items-center justify-between">
                                 <h3 className="font-bold text-sm flex items-center gap-2">
                                     <FileText size={14} className="text-primary" />
                                     Project Notes
                                 </h3>
-                                <span className="text-[10px] text-muted-foreground">Markdown supported <XIcon size={14} className="text-primary ml-4 cursor-pointer" onClick={() => setShowNotes(false)} /></span>
+                                <span className="text-[10px] text-muted-foreground cursor-pointer flex gap-0.5 w-fit">Markdown supported<XIcon size={14} className="text-primary ml-4 cursor-pointer" onClick={() => setShowNotes(false)} /></span>
                             </div>
                             <textarea
                                 value={project.notes || ""}

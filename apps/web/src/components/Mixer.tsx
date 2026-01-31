@@ -3,6 +3,40 @@ import { cn } from "@/lib/utils";
 import React, { useRef, useState } from "react";
 import { FolderOpen, Zap, Activity } from "lucide-react";
 
+const Label = ({ className, children, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) => (
+    <label className={cn("text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70", className)} {...props}>
+        {children}
+    </label>
+);
+
+interface SliderProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
+    value: number[];
+    onValueChange: (value: number[]) => void;
+    orientation?: "horizontal" | "vertical";
+}
+
+const Slider = ({ value, min, max, step, onValueChange, className, orientation = "horizontal", ...props }: SliderProps) => (
+    <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value?.[0] ?? 0}
+        onChange={(e) => onValueChange([parseFloat(e.target.value)])}
+        className={cn(
+            "rounded-lg appearance-none cursor-pointer accent-primary bg-muted",
+            orientation === "vertical" ? "h-full w-1 writing-mode-vertical" : "w-full h-1",
+            className
+        )}
+        style={orientation === "vertical" ? { appearance: "slider-vertical" } as unknown as React.CSSProperties : {}}
+        {...props}
+    />
+);
+
+const Separator = ({ className, orientation = "horizontal", ...props }: React.HTMLAttributes<HTMLDivElement> & { orientation?: "horizontal" | "vertical" }) => (
+    <div className={cn("shrink-0 bg-border", orientation === "horizontal" ? "h-[1px] w-full" : "h-full w-[1px]", className)} {...props} />
+);
+
 // ... (existing Mixer code) ...
 
 interface KnobProps {
@@ -45,8 +79,12 @@ export function Mixer() {
         toggleTrackSolo,
         importSample,
         masterEffects,
-        setMasterEffect
+        setMasterEffect,
+        setMasterEQ,
     } = useStore();
+
+    // Derived state for smoother updates
+    const masterEq = masterEffects.masterEQ;
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [selectedTrack, setSelectedTrack] = useState<string | null>(null);
 
@@ -65,12 +103,12 @@ export function Mixer() {
 
     // Define order consistently
     const order = ["kick", "snare", "hihat", "clap", "melodic"];
-    const channels = order.map(id => mixer[id]).filter(Boolean);
+    const channels = order.map(id => mixer?.[id]).filter(Boolean);
 
     return (
-        <div className="flex bg-background/50 h-full rounded-xl border border-border backdrop-blur-sm overflow-hidden">
+        <div className="flex flex-col md:flex-row bg-background/50 h-full rounded-xl border border-border backdrop-blur-sm overflow-hidden">
             {/* Channels Section */}
-            <div className="flex-1 flex flex-col p-4 border-r border-border min-w-0">
+            <div className="flex-1 flex flex-col p-4 border-b md:border-b-0 md:border-r border-border min-w-0">
                 <div className="flex items-center justify-between mb-4 shrink-0">
                     <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
                         <Activity className="text-primary" /> Mixer
@@ -102,7 +140,7 @@ export function Mixer() {
             </div>
 
             {/* Master FX Rack */}
-            <div className="w-80 flex flex-col bg-zinc-950/30 shrink-0 border-l border-border">
+            <div className="w-full md:w-80 flex flex-col bg-zinc-950/30 shrink-0 border-t md:border-t-0 md:border-l border-border h-[40%] md:h-auto">
                 <div className="p-3 border-b border-border bg-zinc-900/50">
                     <h3 className="text-sm font-bold text-muted-foreground flex items-center gap-2">
                         <Zap size={16} className="text-yellow-500" /> MASTER RACK
@@ -131,7 +169,60 @@ export function Mixer() {
                             <Knob label="WET" value={masterEffects.bitCrusherWet} min={0} max={1} step={0.05} onChange={(v: number) => setMasterEffect("bitCrusherWet", v)} />
                         </div>
                         <div className="grid grid-cols-2 gap-2">
-                            <div className="col-span-2">
+                            <div className="space-y-4">
+                                <Label className="text-xs font-mono text-muted-foreground uppercase tracking-widest">Master EQ</Label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <div className="space-y-2 text-center">
+                                        <div className="h-32 bg-zinc-900/50 rounded-lg flex items-center justify-center relative group p-2">
+                                            <div className="absolute inset-x-0 top-1/2 h-0.5 bg-zinc-800" />
+                                            <Slider
+                                                orientation="vertical"
+                                                min={-12}
+                                                max={12}
+                                                step={0.5}
+                                                value={[masterEq.low]}
+                                                onValueChange={([val]: number[]) => setMasterEQ("low", val)}
+                                                className="h-full py-2"
+                                            />
+                                        </div>
+                                        <span className="text-[10px] font-mono text-muted-foreground">LOW</span>
+                                    </div>
+                                    <div className="space-y-2 text-center">
+                                        <div className="h-32 bg-zinc-900/50 rounded-lg flex items-center justify-center relative group p-2">
+                                            <div className="absolute inset-x-0 top-1/2 h-0.5 bg-zinc-800" />
+                                            <Slider
+                                                orientation="vertical"
+                                                min={-12}
+                                                max={12}
+                                                step={0.5}
+                                                value={[masterEq.mid]}
+                                                onValueChange={([val]: number[]) => setMasterEQ("mid", val)}
+                                                className="h-full py-2"
+                                            />
+                                        </div>
+                                        <span className="text-[10px] font-mono text-muted-foreground">MID</span>
+                                    </div>
+                                    <div className="space-y-2 text-center">
+                                        <div className="h-32 bg-zinc-900/50 rounded-lg flex items-center justify-center relative group p-2">
+                                            <div className="absolute inset-x-0 top-1/2 h-0.5 bg-zinc-800" />
+                                            <Slider
+                                                orientation="vertical"
+                                                min={-12}
+                                                max={12}
+                                                step={0.5}
+                                                value={[masterEq.high]}
+                                                onValueChange={([val]: number[]) => setMasterEQ("high", val)}
+                                                className="h-full py-2"
+                                            />
+                                        </div>
+                                        <span className="text-[10px] font-mono text-muted-foreground">HIGH</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <Separator orientation="vertical" className="h-auto" />
+
+                            <div className="space-y-4 col-span-1">
                                 <label className="text-[9px] text-muted-foreground font-bold mb-1 block">CUTOFF</label>
                                 <input
                                     type="range"

@@ -15,7 +15,8 @@ type SyncMessage =
     | { type: "MIXER_UPDATE"; trackId: string; field: string; value: number | boolean }
     | { type: "TRANSPORT"; playing: boolean }
     | { type: "BPM"; bpm: number }
-    | { type: "EVENT_LOG"; message: string }; // New Type
+    | { type: "EVENT_LOG"; message: string }
+    | { type: "MASTER_FX_UPDATE"; field?: string; effect?: string; param?: string; value: number | string }; // New Type
 
 class P2PManager {
     peer: Peer | null = null;
@@ -134,6 +135,14 @@ class P2PManager {
                 break;
             case "EVENT_LOG":
                 toast.info(msg.message, { icon: "📡" });
+                break;
+            case "MASTER_FX_UPDATE":
+                if (msg.effect === 'eq' && msg.param) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    store.setMasterEQ(msg.param as any, msg.value as number);
+                } else if (msg.field) {
+                    store.setMasterEffect(msg.field, msg.value as number);
+                }
                 break;
         }
     }

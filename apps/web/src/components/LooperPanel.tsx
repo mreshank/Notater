@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useStore, LoopTrack } from "@/lib/store";
-import { Mic, Play, Square, Trash2, Volume2, VolumeX, Repeat, X } from "lucide-react";
+import { Mic, Play, Square, Trash2, Volume2, VolumeX, Repeat, X, Download } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function LooperPanel() {
@@ -27,18 +27,20 @@ export function LooperPanel() {
                 {isOpen && (
                     <motion.div
                         initial={{ width: 0, opacity: 0 }}
-                        animate={{ width: 320, opacity: 1 }}
+                        animate={{ width: "auto", opacity: 1 }}
                         exit={{ width: 0, opacity: 0 }}
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                        className="h-full border-l border-border bg-background/95 backdrop-blur-xl shadow-2xl z-40 bg-background flex flex-col overflow-hidden"
+                        className="h-full border-l border-border bg-background/95 backdrop-blur-xl shadow-2xl z-40 bg-background flex flex-col overflow-hidden max-w-[90vw] md:max-w-md"
                     >
-                        <div className="w-80 h-full flex flex-col p-4">
+                        <div className="w-[320px] md:w-80 h-full flex flex-col p-4">
                             <div className="flex items-center justify-between mb-6 mt-4">
                                 <h2 className="text-xl font-bold flex items-center gap-2">
                                     <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
                                     Looper
                                 </h2>
-                                <X size={24} onClick={() => setIsOpen(false)} className="border border-border rounded-full p-1" />
+                                <div className="flex items-center gap-2">
+                                    <X size={24} onClick={() => setIsOpen(false)} className="border border-border rounded-full p-1 cursor-pointer hover:bg-muted" />
+                                </div>
                             </div>
 
                             <div className="flex-1 overflow-y-auto flex flex-col gap-4 pb-20">
@@ -76,6 +78,14 @@ function LoopTrackCard({
     const isPlaying = track.state === "playing";
     const hasLoop = track.state !== "empty" && track.state !== "recording";
 
+    const handleDownload = () => {
+        if (!track.url) return;
+        const a = document.createElement("a");
+        a.href = track.url;
+        a.download = `loop-${track.id}-${Date.now()}.webm`;
+        a.click();
+    };
+
     return (
         <div className={`relative w-full rounded-xl p-4 flex flex-col justify-between gap-3 border transition-all ${isRecording ? "bg-red-500/10 border-red-500/50 shadow-inner" :
             isPlaying ? "bg-primary/10 border-primary/50" :
@@ -84,11 +94,18 @@ function LoopTrackCard({
             {/* Header */}
             <div className="flex items-center justify-between">
                 <span className="text-xs font-bold font-mono text-muted-foreground">LOOP {track.id}</span>
-                {hasLoop && (
-                    <button onClick={onClear} className="text-muted-foreground hover:text-destructive transition-colors" title="Clear Loop">
-                        <Trash2 size={14} />
-                    </button>
-                )}
+                <div className="flex items-center gap-2">
+                    {hasLoop && track.url && (
+                        <button onClick={handleDownload} className="text-muted-foreground hover:text-primary transition-colors" title="Download Loop">
+                            <Download size={14} />
+                        </button>
+                    )}
+                    {hasLoop && (
+                        <button onClick={onClear} className="text-muted-foreground hover:text-destructive transition-colors" title="Clear Loop">
+                            <Trash2 size={14} />
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Controls */}

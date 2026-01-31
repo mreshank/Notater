@@ -2,6 +2,7 @@ import { useRef, useEffect, useState, useMemo } from "react";
 import { useStore, Note } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
 import { Music, Layers, Grid3X3, Eraser, ChevronsLeftRight, MousePointer2, Pencil, Trash2 } from "lucide-react";
+import { SynthSelect } from "./SynthSelect";
 
 // Scale patterns (in semitones from root)
 const SCALES: Record<string, number[]> = {
@@ -184,6 +185,8 @@ export function PianoRoll() {
                                 <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
                             ))}
                         </select>
+                        <div className="w-px h-4 bg-border"></div>
+                        <SynthSelect />
                     </div>
 
                     {/* Tools Palette */}

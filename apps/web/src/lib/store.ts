@@ -106,6 +106,11 @@ interface AppState {
       chorusWet: number;
       compressorThresh: number;
       compressorRatio: number;
+      masterEQ: {
+        low: number;
+        mid: number;
+        high: number;
+      };
   };
   sequencerGrid: Record<string, boolean[]>;
   pianoRollNotes: Note[];
@@ -141,7 +146,7 @@ interface AppState {
   // Settings
   setTheme: (theme: "lofi" | "cyber" | "neo" | "forest" | "ocean" | "sunset" | "midnight") => void;
   setSynthPreset: (preset: SynthPreset) => void;
-  setMasterEffect: (param: keyof AppState['masterEffects'], value: number | string) => void;
+  setMasterEffect: (field: string, value: number | string) => void;
 
   // Mixer Actions
   setTrackVolume: (trackId: string, volume: number) => void;
@@ -165,6 +170,9 @@ interface AppState {
   
   // Synth Actions
   playNote: (note: string, duration?: string) => void;
+  setAction: (action: string) => void; 
+  setMasterEQ: (band: "low" | "mid" | "high", value: number) => void;
+  // setMasterEffect removed from here (duplicate)
   playTrack: (trackId: string) => void;
   triggerAttack: (note: string) => void;
   triggerRelease: (note: string) => void;
@@ -233,7 +241,12 @@ export const useStore = create<AppState>((set, get) => ({
       chorusDepth: 0.5,
       chorusWet: 0,
       compressorThresh: -20,
-      compressorRatio: 4
+    compressorRatio: 4,
+    masterEQ: {
+        low: 0,
+        mid: 0,
+        high: 0
+    },
   },
   sequencerGrid: INITIAL_GRID,
   pianoRollNotes: [],
@@ -354,26 +367,69 @@ export const useStore = create<AppState>((set, get) => ({
     set({ synthPreset: preset });
   },
 
-  setMasterEffect: (param, value) => {
-    if (globalEffects) {
-        if (param === "reverbWet") globalEffects.reverb.wet.value = value as number;
-        else if (param === "delayWet") globalEffects.delay.wet.value = value as number;
-        else if (param === "delayTime") globalEffects.delay.delayTime.value = value as string;
-        else if (param === "feedback") globalEffects.delay.feedback.value = value as number;
-        else if (param === "filterFreq") globalEffects.filter.frequency.value = value as number;
-        else if (param === "filterRes") globalEffects.filter.Q.value = value as number;
-        else if (param === "bitCrusherBits") globalEffects.bitCrusher.bits.value = value as number;
-        else if (param === "bitCrusherWet") globalEffects.bitCrusher.wet.value = value as number;
-        else if (param === "chorusDepth") globalEffects.chorus.depth = value as number; // accessor
-        else if (param === "chorusWet") globalEffects.chorus.wet.value = value as number;
-        else if (param === "compressorThresh") globalEffects.compressor.threshold.value = value as number;
-        else if (param === "compressorRatio") globalEffects.compressor.ratio.value = value as number;
-    }
-    set(state => ({
-        masterEffects: { ...state.masterEffects, [param]: value }
+  setMasterEffect: (field, value) => {
+    set((state) => ({
+      masterEffects: { ...state.masterEffects, [field]: value }
     }));
+    
+    // Update audio engine
+    if (globalEffects) {
+        const numVal = typeof value === 'number' ? value : 0;
+        
+        // Reverb
+        if (field === "reverbWet" && globalEffects.reverb) globalEffects.reverb.wet.value = numVal;
+        
+        // Delay
+        else if (field === "delayWet" && globalEffects.delay) globalEffects.delay.wet.value = numVal;
+        else if (field === "feedback" && globalEffects.delay) globalEffects.delay.feedback.value = numVal;
+        else if (field === "delayTime" && globalEffects.delay) {
+             // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             globalEffects.delay.delayTime.value = value as any; 
+        }
+        
+        // BitCrusher
+        else if (field === "bitCrusherBits" && globalEffects.bitCrusher) {
+            // Use set for read-only properties or signals
+            globalEffects.bitCrusher.set({ bits: numVal });
+        }
+        else if (field === "bitCrusherWet" && globalEffects.bitCrusher) globalEffects.bitCrusher.wet.value = numVal;
+        
+        // Chorus
+        else if (field === "chorusDepth" && globalEffects.chorus) {
+             globalEffects.chorus.depth = numVal; // depth is 0-1 number
+        }
+        else if (field === "chorusWet" && globalEffects.chorus) globalEffects.chorus.wet.value = numVal;
+        
+        // Filter
+        else if (field === "filterFreq" && globalEffects.filter) globalEffects.filter.frequency.value = numVal;
+        else if (field === "filterRes" && globalEffects.filter) globalEffects.filter.Q.value = numVal;
+        
+        // Compressor
+        else if (field === "compressorThresh" && globalEffects.compressor) globalEffects.compressor.threshold.value = numVal;
+        else if (field === "compressorRatio" && globalEffects.compressor) globalEffects.compressor.ratio.value = numVal;
+    }
+    
+    p2p.broadcast({ type: "MASTER_FX_UPDATE", field, value });
   },
 
+  setMasterEQ: (band, value) => {
+      set((state) => ({
+          masterEffects: {
+              ...state.masterEffects,
+              masterEQ: {
+                  ...state.masterEffects.masterEQ,
+                  [band]: value
+              }
+          }
+      }));
+
+      if (globalEffects && globalEffects.eq) {
+          globalEffects.eq[band].value = value;
+      }
+      
+      p2p.broadcast({ type: "MASTER_FX_UPDATE", effect: "eq", param: band, value });
+  },
+  
   setSynthParam: (param, value) => {
     set(state => ({ synthParams: { ...state.synthParams, [param]: value } }));
     
@@ -479,6 +535,11 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   setSequencerGrid: (grid) => set({ sequencerGrid: grid }),
+
+  setAction: (action) => {
+      console.log("Internal Action:", action);
+      // Placeholder for generic actions if needed, or update project notes/status
+  },
 
   addPianoNote: (note) => set((state) => ({ 
     pianoRollNotes: [...state.pianoRollNotes, note] 

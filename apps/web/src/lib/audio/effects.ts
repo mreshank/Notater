@@ -12,6 +12,7 @@ export interface EffectsChain {
   bitCrusher: Tone.BitCrusher;
   chorus: Tone.Chorus;
   filter: Tone.Filter;
+  eq: Tone.EQ3;
   compressor: Tone.Compressor;
   limiter: Tone.Limiter;
   output: Tone.Gain;
@@ -55,6 +56,12 @@ export function createEffectsChain(): EffectsChain {
     rolloff: -12,
   });
 
+  const eq = new Tone.EQ3({
+    low: 0,
+    mid: 0,
+    high: 0
+  });
+
   const compressor = new Tone.Compressor({
     threshold: -20,
     ratio: 4,
@@ -66,18 +73,19 @@ export function createEffectsChain(): EffectsChain {
 
   const output = new Tone.Gain(0.8);
 
-  // Chain: distortion -> bitCrusher -> filter -> chorus -> delay -> reverb -> compressor -> limiter -> output
+  // Chain: distortion -> bitCrusher -> filter -> chorus -> delay -> reverb -> eq -> compressor -> limiter -> output
   distortion.connect(bitCrusher);
   bitCrusher.connect(filter);
   filter.connect(chorus);
   chorus.connect(delay);
   delay.connect(reverb);
-  reverb.connect(compressor);
+  reverb.connect(eq);
+  eq.connect(compressor);
   compressor.connect(limiter);
   limiter.connect(output);
   output.toDestination();
 
-  return { reverb, delay, distortion, bitCrusher, chorus, filter, compressor, limiter, output };
+  return { reverb, delay, distortion, bitCrusher, chorus, filter, eq, compressor, limiter, output };
 }
 
 /**
