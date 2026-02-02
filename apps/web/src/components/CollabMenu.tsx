@@ -88,7 +88,7 @@ export function CollabMenu() {
         <div className="relative z-50">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`flex items-center justify-center p-2 rounded-lg md:border transition-all ${isConnected
+                className={`flex items-center justify-center p-1.5 rounded-lg md:border transition-all ${isConnected
                     ? "md:bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500/20"
                     : "md:bg-surface border-border hover:bg-surface-hover text-muted-foreground"
                     }`}

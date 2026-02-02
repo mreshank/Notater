@@ -6,6 +6,8 @@
  */
 import * as Tone from "tone";
 
+import { mixer } from "./mixer";
+
 let isInitialized = false;
 
 /**
@@ -15,6 +17,7 @@ export async function initAudio(): Promise<void> {
   if (isInitialized) return;
   
   await Tone.start();
+  mixer.initialize();
   isInitialized = true;
   console.log("🎵 Audio Context initialized");
 }

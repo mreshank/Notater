@@ -14,18 +14,27 @@ export interface ChannelStrip {
 export class MixerManager {
   private channels: Record<string, ChannelStrip> = {};
   private masterChain: EffectsChain | null = null;
-  private masterOutput: Tone.Gain;
-
-
-  private recorder: Tone.Recorder;
+  private masterOutput!: Tone.Gain;
+  private recorder!: Tone.Recorder;
+  private isInitialized = false;
 
   constructor() {
+    // Lazy initialization to prevent SSR issues
+  }
+
+  initialize() {
+    if (this.isInitialized) return;
+    
     this.masterOutput = new Tone.Gain(1).toDestination();
     this.recorder = new Tone.Recorder();
     this.masterOutput.connect(this.recorder);
+    
+    this.isInitialized = true;
+    console.log("🎚 Mixer Initialized");
   }
 
   setMasterChain(chain: EffectsChain) {
+    if (!this.isInitialized) return;
     this.masterChain = chain;
     // Connect master chain output to recorder
     this.masterChain.output.connect(this.recorder);
@@ -36,13 +45,13 @@ export class MixerManager {
   }
 
   async startRecording() {
-    if (this.recorder.state === "started") return;
+    if (!this.isInitialized || this.recorder.state === "started") return;
     await this.recorder.start();
     console.log("🔴 Global Recording Started");
   }
 
   async stopRecording(): Promise<Blob> {
-    if (this.recorder.state === "stopped") return new Blob([]);
+    if (!this.isInitialized || this.recorder.state === "stopped") return new Blob([]);
     const recording = await this.recorder.stop();
     console.log("⬛ Global Recording Stopped");
     return recording;
@@ -51,6 +60,19 @@ export class MixerManager {
 
   createChannel(id: string, name: string): ChannelStrip {
     if (this.channels[id]) return this.channels[id];
+
+    // Ensure mixer is initialized (if called before explicit init, force it if client-side)
+    if (!this.isInitialized) {
+        if (typeof window !== "undefined") {
+            this.initialize();
+        } else {
+             console.warn("Mixer: createChannel called on server");
+             // Return dummy or throw? Throwing might be safer or returning dummy to prevent crash
+             // But Tone objects fail on server anyway.
+             // We can't return valid ChannelStrip without Tone nodes.
+             // We'll rely on initialize() being called in initAudio.
+        }
+    }
 
     // 1. Create Nodes
     const input = new Tone.Gain(1);

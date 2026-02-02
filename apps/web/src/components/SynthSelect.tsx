@@ -28,9 +28,9 @@ export function SynthSelect() {
         <div className="relative z-50">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 px-3 py-1.5 bg-surface hover:bg-surface-hover border border-border rounded-full transition-colors"
+                className="flex items-center gap-2 bg-surface hover:bg-surface-hover/50 rounded transition-colors"
             >
-                <div className={`w-3 h-3 rounded-full ${activePreset.color}`}></div>
+                <div className={`w-2.5 h-2.5 rounded-full ${activePreset.color}`}></div>
                 <span className="text-xs font-bold uppercase">{activePreset.label}</span>
             </button>
 

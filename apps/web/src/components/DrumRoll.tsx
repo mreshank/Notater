@@ -1,8 +1,9 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 import { useStore } from "@/lib/store";
 import { playDrum, DrumType, DRUM_TYPES } from "@/lib/audio/drums";
+import { useToast } from "./ui/ToastProvider";
 
 // Simple drum labels
 const DRUM_INFO: Record<DrumType, { label: string; color: string }> = {
@@ -38,8 +39,8 @@ export function DrumRoll() {
     const [patterns, setPatterns] = useState<DrumPattern[]>([]);
     const [currentPattern, setCurrentPattern] = useState<string | null>(null);
     const [patternName, setPatternName] = useState("");
-    const [isRecording, setIsRecording] = useState(false);
     const lastPlayedStep = useRef<number>(-1);
+    const { success, error } = useToast();
 
     // Toggle step
     const toggleStep = (drum: DrumType, step: number) => {
@@ -129,6 +130,7 @@ export function DrumRoll() {
                 >
                     Clear
                 </button>
+
                 <div className="flex-1" />
                 <span className="text-xs opacity-50 font-mono">
                     Step {playheadPos + 1}/{STEPS}
@@ -201,8 +203,8 @@ export function DrumRoll() {
                         <div
                             key={p.id}
                             className={`flex items-center gap-1 px-2 py-1 rounded text-xs border ${currentPattern === p.id
-                                    ? 'bg-primary/20 border-primary'
-                                    : 'bg-surface border-border'
+                                ? 'bg-primary/20 border-primary'
+                                : 'bg-surface border-border'
                                 }`}
                         >
                             <button onClick={() => loadPattern(p.id)} className="font-bold">

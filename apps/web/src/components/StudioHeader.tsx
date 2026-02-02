@@ -4,7 +4,7 @@ import { useStore } from "@/lib/store";
 import {
     Play, Pause, Square, Circle, Save, Download,
     FileText, Moon, Sun, Trees, Waves, Sunset, MoonStar, Zap,
-    ChevronLeft, ChevronRight, Loader2, XIcon, Menu
+    ChevronLeft, ChevronRight, Loader2, XIcon, Menu, Maximize, Smartphone
 } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -26,10 +26,10 @@ export function StudioHeader() {
                 <div className="flex items-center gap-2 sm:gap-4">
                     <div className="flex items-center gap-2 sm:gap-3">
                         {/* Logo */}
-                        <div className="group relative w-8 h-8 sm:w-9 sm:h-9 cursor-pointer shrink-0">
-                            <div className="absolute inset-0 bg-gradient-to-br from-primary to-purple-600 rounded-xl blur-sm opacity-50 group-hover:opacity-100 transition-opacity"></div>
-                            <div className="relative w-full h-full bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-inner border border-white/10">
-                                <Image src="/web-app-manifest-192x192.png" alt="Notater" width={32} height={32} className="w-5 h-5 sm:w-6 sm:h-6 object-contain shadow-sm" />
+                        <div className="group relative cursor-pointer shrink-0">
+                            <div className="absolute inset-0 bg-gradient-to-br from-primary to-purple-600 rounded blur-sm opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                            <div className="relative w-full h-full bg-gradient-to-br from-primary to-purple-600 rounded-md flex items-center justify-center shadow-inner border border-white/10">
+                                <Image src="/icon.png" alt="Notater" width={32} height={32} className="w-5 h-5 sm:w-6 sm:h-6 object-contain shadow-sm" />
                             </div>
                         </div>
                         {/* Project Name - Hidden on mobile */}
@@ -364,6 +364,42 @@ export function StudioHeader() {
                                         <FileText size={18} />
                                         <span className="text-sm font-medium">Project Notes</span>
                                     </button>
+
+                                    {/* Display Controls */}
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button
+                                            onClick={() => {
+                                                if (!document.fullscreenElement) {
+                                                    document.documentElement.requestFullscreen();
+                                                } else {
+                                                    document.exitFullscreen();
+                                                }
+                                                setShowMobileMenu(false);
+                                            }}
+                                            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+                                        >
+                                            <Maximize size={18} />
+                                            <span className="text-sm font-medium">Fullscreen</span>
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                if (!document.fullscreenElement) {
+                                                    document.documentElement.requestFullscreen().catch(err => console.error(err));
+                                                }
+                                                // Try to lock orientation (Android/Chrome mostly)
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                if (screen.orientation && (screen.orientation as any).lock) {
+                                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                    (screen.orientation as any).lock("landscape").catch((err: any) => console.log("Orientation lock failed:", err));
+                                                }
+                                                setShowMobileMenu(false);
+                                            }}
+                                            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+                                        >
+                                            <Smartphone size={18} className="rotate-90" />
+                                            <span className="text-sm font-medium">Rotate</span>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {/* Theme Selection */}

@@ -159,7 +159,7 @@ export function PianoRoll() {
     return (
         <div className="w-full h-full flex flex-col bg-background/50 rounded-xl border border-border overflow-hidden backdrop-blur-sm shadow-xl">
             {/* Controls Header - Mobile Responsive */}
-            <div className="flex flex-col gap-2 p-2 sm:p-3 border-b border-border bg-surface/50 shrink-0">
+            <div className="flex flex-col--x justify-between gap-2 p-2 sm:p-3 border-b border-border bg-surface/50 shrink-0">
 
                 {/* Row 1: Essential Controls - Always visible */}
                 <div className="flex items-center justify-between flex-wrap gap-2">
@@ -193,7 +193,7 @@ export function PianoRoll() {
                         </div>
                     </div>
 
-                    {/* Tools Palette - Larger on mobile */}
+                     {/* Tools Palette - Larger on mobile */}
                     <div className="flex items-center gap-1 bg-zinc-900/50 p-1 sm:p-1.5 rounded-lg border border-border">
                         <button
                             onClick={() => setTool("pointer")}
@@ -216,6 +216,21 @@ export function PianoRoll() {
                         >
                             <Eraser size={16} className="sm:w-[10px] sm:h-[10px]" />
                         </button>
+                    </div>
+
+                    {/* Bars */}
+                    <div className="flex items-center gap-2 bg-zinc-900/50 p-1.5 rounded-lg border border-border">
+                        <ChevronsLeftRight size={14} className="text-primary" />
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase">Bars</span>
+                        <select
+                            value={project.barCount || 4}
+                            onChange={(e) => setBarCount(Number(e.target.value))}
+                            className="text-xs font-bold bg-transparent text-foreground w-10 text-center cursor-pointer touch-manipulation"
+                        >
+                            {[1, 2, 4, 8, 16].map(n => (
+                                <option key={n} value={n}>{n}</option>
+                            ))}
+                        </select>
                     </div>
 
                     {/* Quick Actions */}
@@ -254,20 +269,7 @@ export function PianoRoll() {
 
                 {/* Row 2: Advanced Controls - Collapsible on mobile */}
                 <div className={`flex items-center justify-between flex-wrap gap-2 ${showAdvanced ? 'flex' : 'hidden'} sm:flex`}>
-                    {/* Bars */}
-                    <div className="flex items-center gap-2 bg-zinc-900/50 p-1.5 rounded-lg border border-border">
-                        <ChevronsLeftRight size={14} className="text-primary" />
-                        <span className="text-[10px] font-bold text-muted-foreground uppercase">Bars</span>
-                        <select
-                            value={project.barCount || 4}
-                            onChange={(e) => setBarCount(Number(e.target.value))}
-                            className="text-xs font-bold bg-transparent text-foreground w-10 text-center cursor-pointer touch-manipulation"
-                        >
-                            {[1, 2, 4, 8, 16].map(n => (
-                                <option key={n} value={n}>{n}</option>
-                            ))}
-                        </select>
-                    </div>
+                    
 
                     {/* Zoom - Hidden on very small screens */}
                     <div className="hidden xs:flex items-center gap-2 bg-zinc-900/50 p-1.5 rounded-lg border border-border">

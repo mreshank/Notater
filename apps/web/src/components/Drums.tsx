@@ -3,7 +3,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { playDrum, DrumType, DRUM_TYPES, setDrumKit, DrumKit, DRUM_KITS } from "@/lib/audio/drums";
 import { useStore } from "@/lib/store";
-import { LucideIcon, Circle, Triangle, Square, Hexagon, Octagon, Star, Disc, Zap, Save, Trash2, X } from "lucide-react";
+import { LucideIcon, Circle, Triangle, Square, Hexagon, Octagon, Star, Disc, Zap, Save, Trash2, X, Sparkles, Loader2 } from "lucide-react";
+import { useToast } from "./ui/ToastProvider";
+import { toast } from "sonner";
 
 type DrumMode = "pad" | "set" | "roll";
 
@@ -79,7 +81,54 @@ export function Drums() {
     const [patterns, setPatterns] = useState<DrumPattern[]>([]);
     const [patternName, setPatternName] = useState("");
     const [currentPatternId, setCurrentPatternId] = useState<string | null>(null);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const { success, error } = useToast();
     const lastPlayedStep = useRef<number>(-1);
+
+    // AI Generation
+    const generatePattern = async () => {
+        try {
+            setIsGenerating(true);
+            toast.loading("Generating pattern...");
+            const res = await fetch("/api/ai/suggest", {
+                method: "POST",
+                body: JSON.stringify({ promptType: "drum-roll" }),
+            });
+            const data = await res.json();
+
+            if (data.sequencerPattern) {
+                const newGrid = createEmptyGrid();
+                let hasNotes = false;
+
+                // Merge AI pattern into grid
+                Object.keys(data.sequencerPattern).forEach((key) => {
+                    const drumKey = key as DrumType;
+                    if (DRUM_TYPES.includes(drumKey) && Array.isArray(data.sequencerPattern[key])) {
+                        // Ensure 16 steps
+                        newGrid[drumKey] = data.sequencerPattern[key].slice(0, STEPS).map((v: unknown) => !!v);
+                        if (newGrid[drumKey].some(v => v)) hasNotes = true;
+                    }
+                });
+
+                // Allow partial fills
+                if (hasNotes) {
+                    setGrid(newGrid);
+                    setPatternName(data.title || "AI Beat");
+                    success(`Generated: ${data.title}`);
+                } else {
+                    error("AI returned empty pattern");
+                }
+            } else {
+                error("No pattern generated");
+            }
+        } catch (e) {
+            console.error(e);
+            error("AI Generation Failed");
+        } finally {
+            setIsGenerating(false);
+            toast.dismiss();
+        }
+    };
 
     // Save Pattern
     const savePattern = () => {
@@ -320,6 +369,19 @@ export function Drums() {
                             >
                                 <Trash2 size={12} /> Clear
                             </button>
+
+                            <div className="h-4 w-px bg-border/50 mx-1"></div>
+
+                            <button
+                                onClick={generatePattern}
+                                disabled={isGenerating}
+                                className="px-2 py-1.5 text-[10px] font-bold bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 flex items-center gap-1 transition-colors shadow-sm"
+                                title="Generate with AI"
+                            >
+                                {isGenerating ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                {/* Magic AI */}
+                            </button>
+
                             <span className="text-xs opacity-50 font-mono ml-auto">
                                 Step {playheadPos + 1}/{STEPS}
                             </span>

@@ -50,7 +50,12 @@ export async function POST(req: Request) {
                    "kick": [boolean... 16 steps], 
                    "snare": [boolean... 16 steps],
                    "hihat": [boolean... 16 steps],
-                   "clap": [boolean... 16 steps]
+                   "hihatOpen": [boolean... 16 steps],
+                   "clap": [boolean... 16 steps],
+                   "tom1": [boolean... 16 steps],
+                   "tom2": [boolean... 16 steps],
+                   "crash": [boolean... 16 steps],
+                   "ride": [boolean... 16 steps]
                 },
                 "pianoNotes": [
                     { "pitch": "C4", "step": 0, "duration": 4 } // Duration in 16th notes
@@ -64,6 +69,8 @@ export async function POST(req: Request) {
             userPrompt = "Give me a unique chord progression idea for a Lo-Fi or Neo-Soul track.";
         } else if (promptType === "trap") {
             userPrompt = "Give me a dark trap beat idea.";
+        } else if (promptType === "drum-roll") {
+            userPrompt = "Give me a complex and catchy drum pattern using all available instruments (kick, snare, hihats, toms, cymbals). Make it groovy and professional.";
         }
 
         const result = await model.generateContent([
