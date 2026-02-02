@@ -9,6 +9,7 @@ import {
   createEffectsChain,
   type SynthPreset,
   applyPreset,
+  mixer, // Import mixer
 } from "./audio";
 import { 
     initLooper, startRecording, stopRecording, playLoop as audioPlayLoop, stopLoop as audioStopLoop, clearLoop as audioClearLoop, setLoopVolume, muteLoop 
@@ -58,6 +59,13 @@ export type Note = {
   step: number;
   duration: number;
 };
+
+export interface Collaborator {
+  id: string;
+  name: string;
+  color: string;
+  isHost?: boolean;
+}
 
 export interface MixerChannel {
   id: string;
@@ -128,6 +136,8 @@ interface AppState {
   synthPreset: SynthPreset;
   synthParams: SynthParams; 
   looper: Record<string, LoopTrack>;
+  collaborators: Collaborator[]; // P2P Presence
+  
   
   // Actions
   setSynthParam: <K extends keyof SynthParams>(param: K, value: SynthParams[K]) => void;
@@ -154,16 +164,21 @@ interface AppState {
   setTrackPan: (trackId: string, pan: number) => void;
   setTrackEQ: (trackId: string, band: "low" | "mid" | "high", value: number) => void;
   setTrackSend: (trackId: string, type: "reverb" | "delay", value: number) => void;
-  toggleTrackMute: (trackId: string) => void;
+  toggleTrackMute: (trackId: string, forceValue?: boolean) => void;
   toggleTrackSolo: (trackId: string) => void;
   
   // Editor Actions
-  toggleSequencerStep: (rowId: string, step: number) => void;
+  toggleSequencerStep: (rowId: string, step: number, forceValue?: boolean) => void;
   setSequencerGrid: (grid: Record<string, boolean[]>) => void;
   addPianoNote: (note: Note) => void;
   removePianoNote: (id: string) => void;
   clearPianoNotes: () => void;
   
+  // Presence Actions
+  addCollaborator: (user: Collaborator) => void;
+  removeCollaborator: (id: string) => void;
+  setCollaborators: (users: Collaborator[]) => void;
+
   // Persistence
   saveProject: () => Promise<void>;
   loadProject: (id: string) => Promise<void>;
@@ -230,6 +245,7 @@ export const useStore = create<AppState>((set, get) => ({
     barCount: 2,
     notes: ""
   },
+  collaborators: [],
   masterEffects: {
       reverbWet: 0.25,
       delayWet: 0,
@@ -286,12 +302,39 @@ export const useStore = create<AppState>((set, get) => ({
     try {
       await initAudio();
       globalEffects = createEffectsChain();
+      mixer.setMasterChain(globalEffects); // Set master chain
+
+      // Initialize Mixer Channels
+      // 1. Synth
+      const melChannel = mixer.createChannel("melodic", "SYNTH");
+      
+      // 2. Drums
+      ROWS.forEach(row => {
+          const ch = mixer.createChannel(row.id, row.label);
+          // Apply initial state from store if needed
+          const storedCh = get().mixer[row.id];
+          if (storedCh) {
+               mixer.setVolume(row.id, storedCh.volume);
+               mixer.setPan(row.id, storedCh.pan);
+               mixer.setMute(row.id, storedCh.muted);
+          }
+      });
+      // Also apply for melodic
+      const storedMel = get().mixer["melodic"];
+      if (storedMel) {
+           mixer.setVolume("melodic", storedMel.volume);
+           mixer.setPan("melodic", storedMel.pan);
+           mixer.setMute("melodic", storedMel.muted);
+      }
+
       globalSynth = createSynth(get().synthPreset);
-      // Connect synth to START of chain (distortion)
-      if (globalEffects) globalSynth.connect(globalEffects.distortion);
+      // Connect synth to Mixer Channel Input instead of dragging it through effects manually
+      // globalEffects is now handled by mixer.setMasterChain
+      globalSynth.connect(melChannel.input); 
+      
       setGlobalBpm(get().project.bpm);
       set({ isAudioInitialized: true });
-      console.log("🎹 Synth initialized");
+      console.log("🎹 Synth & Mixer initialized");
     } catch (err) {
       console.error("Failed to initialize audio:", err);
     }
@@ -328,8 +371,25 @@ export const useStore = create<AppState>((set, get) => ({
     p2p.broadcast({ type: "TRANSPORT", playing: !isPlaying });
   },
 
-  toggleRecord: () => {
-      set(state => ({ isRecording: !state.isRecording }));
+  toggleRecord: async () => {
+      const wasRecording = get().isRecording;
+      
+      if (wasRecording) {
+          // Stop Recording
+          set({ isRecording: false });
+          const blob = await mixer.stopRecording();
+          const url = URL.createObjectURL(blob);
+          
+          // Auto-download
+          const anchor = document.createElement("a");
+          anchor.download = `recording-${new Date().toISOString()}.webm`; // Tone Record defaults to webm
+          anchor.href = url;
+          anchor.click();
+      } else {
+          // Start Recording
+          await mixer.startRecording();
+          set({ isRecording: true });
+      }
   },
 
   setProjectName: (name) => {
@@ -401,7 +461,7 @@ export const useStore = create<AppState>((set, get) => ({
         
         // Chorus
         else if (field === "chorusDepth" && globalEffects.chorus) {
-             globalEffects.chorus.depth = numVal; // depth is 0-1 number
+             globalEffects.chorus.depth = numVal; 
         }
         else if (field === "chorusWet" && globalEffects.chorus) globalEffects.chorus.wet.value = numVal;
         
@@ -412,6 +472,13 @@ export const useStore = create<AppState>((set, get) => ({
         // Compressor
         else if (field === "compressorThresh" && globalEffects.compressor) globalEffects.compressor.threshold.value = numVal;
         else if (field === "compressorRatio" && globalEffects.compressor) globalEffects.compressor.ratio.value = numVal;
+
+        // Limiter
+        else if (field === "limiterThresh" && globalEffects.limiter) globalEffects.limiter.threshold.value = numVal;
+
+        // Distortion
+        else if (field === "distortion" && globalEffects.distortion) globalEffects.distortion.distortion = numVal;
+        else if (field === "distortionWet" && globalEffects.distortion) globalEffects.distortion.wet.value = numVal;
     }
     
     p2p.broadcast({ type: "MASTER_FX_UPDATE", field, value });
@@ -454,6 +521,7 @@ export const useStore = create<AppState>((set, get) => ({
 
   // Mixer Actions
   setTrackVolume: (trackId, volume) => {
+    mixer.setVolume(trackId, volume); // Update Audio
     set((state) => ({
         mixer: {
             ...state.mixer,
@@ -464,6 +532,7 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   setTrackPan: (trackId, pan) => {
+    mixer.setPan(trackId, pan); // Update Audio
     set((state) => ({
         mixer: {
             ...state.mixer,
@@ -474,6 +543,7 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   setTrackEQ: (trackId, band, value) => {
+    mixer.setEQ(trackId, band, value); // Update Audio
     set((state) => ({
         mixer: {
             ...state.mixer,
@@ -490,6 +560,7 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   setTrackSend: (trackId, type, value) => {
+    mixer.setSend(trackId, type, value); // Update Audio
     set((state) => ({
         mixer: {
             ...state.mixer,
@@ -505,14 +576,22 @@ export const useStore = create<AppState>((set, get) => ({
     p2p.broadcast({ type: "MIXER_UPDATE", trackId, field: `send-${type}`, value: value });
   },
 
-  toggleTrackMute: (trackId) => {
-    set((state) => ({
-      mixer: {
-        ...state.mixer,
-        [trackId]: { ...state.mixer[trackId], muted: !state.mixer[trackId].muted }
-      }
-    }));
-    p2p.broadcast({ type: "MIXER_UPDATE", trackId, field: "muted", value: 0 }); // Value ignored for toggle
+  toggleTrackMute: (trackId, forceValue) => {
+    set((state) => {
+        const newMuted = forceValue !== undefined ? forceValue : !state.mixer[trackId].muted;
+        mixer.setMute(trackId, newMuted); 
+        
+        if (forceValue === undefined) {
+            p2p.broadcast({ type: "MIXER_UPDATE", trackId, field: "muted", value: newMuted }); 
+        }
+
+        return {
+            mixer: {
+                ...state.mixer,
+                [trackId]: { ...state.mixer[trackId], muted: newMuted }
+            }
+        };
+    });
   },
 
   toggleTrackSolo: (trackId) => {
@@ -529,14 +608,26 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   // Editor Actions
-  toggleSequencerStep: (rowId, step) => {
-    set((state) => ({
-      sequencerGrid: {
-        ...state.sequencerGrid,
-        [rowId]: state.sequencerGrid[rowId].map((val, i) => i === step ? !val : val)
-      }
-    }));
-    p2p.broadcast({ type: "SEQUENCER_UPDATE", rowId, step });
+  toggleSequencerStep: (rowId, step, forceValue) => {
+    set((state) => {
+        const current = state.sequencerGrid[rowId][step];
+        const next = forceValue !== undefined ? forceValue : !current;
+
+        // Broadcast if this is a local user action (forceValue usually undefined from UI)
+        // If forceValue IS defined, it might be from P2P. We need to avoid loops.
+        // We will separate "receiveP2P" from "userAction".
+        // For now, if called from UI (no forceValue), we broadcast the *result*.
+        if (forceValue === undefined) {
+             p2p.broadcast({ type: "SEQUENCER_UPDATE", rowId, step, value: next });
+        }
+
+        return {
+            sequencerGrid: {
+            ...state.sequencerGrid,
+            [rowId]: state.sequencerGrid[rowId].map((val, i) => i === step ? next : val)
+            }
+        };
+    });
   },
 
   setSequencerGrid: (grid) => set({ sequencerGrid: grid }),
@@ -546,15 +637,34 @@ export const useStore = create<AppState>((set, get) => ({
       // Placeholder for generic actions if needed, or update project notes/status
   },
 
-  addPianoNote: (note) => set((state) => ({ 
-    pianoRollNotes: [...state.pianoRollNotes, note] 
-  })),
+  addPianoNote: (note) => {
+    set((state) => ({ 
+      pianoRollNotes: [...state.pianoRollNotes, note] 
+    }));
+    p2p.broadcast({ type: "PIANOROLL_UPDATE", action: "add", note });
+  },
 
-  removePianoNote: (id) => set((state) => ({
-    pianoRollNotes: state.pianoRollNotes.filter(n => n.id !== id)
-  })),
+  removePianoNote: (id) => {
+    set((state) => ({
+      pianoRollNotes: state.pianoRollNotes.filter(n => n.id !== id)
+    }));
+    p2p.broadcast({ type: "PIANOROLL_UPDATE", action: "remove", id });
+  },
 
-  clearPianoNotes: () => set({ pianoRollNotes: [] }),
+  clearPianoNotes: () => {
+    set({ pianoRollNotes: [] });
+    p2p.broadcast({ type: "PIANOROLL_UPDATE", action: "clear" });
+  },
+
+  // Presence Actions
+  addCollaborator: (user) => set((state) => {
+    if (state.collaborators.find(c => c.id === user.id)) return state;
+    return { collaborators: [...state.collaborators, user] };
+  }),
+  removeCollaborator: (id) => set((state) => ({
+    collaborators: state.collaborators.filter(c => c.id !== id)
+  })),
+  setCollaborators: (users) => set({ collaborators: users }),
 
   // Persistence
   // Persistence
@@ -640,7 +750,10 @@ export const useStore = create<AppState>((set, get) => ({
             globalSynth.disconnect();
             globalSynth.dispose();
             globalSynth = createSynth(data.synthPreset);
-            globalSynth.connect(globalEffects.delay);
+            globalSynth = createSynth(data.synthPreset);
+            // Reconnect
+             const melChannel = mixer.getChannel("melodic");
+             if (melChannel) globalSynth.connect(melChannel.input);
         }
 
         // Broadcast change to peers
@@ -650,7 +763,9 @@ export const useStore = create<AppState>((set, get) => ({
                 project: get().project,
                 sequencerGrid: get().sequencerGrid,
                 mixer: get().mixer,
-                synthPreset: get().synthPreset
+                synthPreset: get().synthPreset,
+                pianoRollNotes: get().pianoRollNotes,
+                collaborators: get().collaborators
             }
         });
         p2p.broadcastLog(`Host loaded project: ${p.name}`);

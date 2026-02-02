@@ -4,13 +4,12 @@ import { useProjects } from "@/lib/db-hooks";
 import { exportProjectPackage, importProjectPackage } from "@/lib/sync";
 import { pushProjectToCloud, pullProjectsFromCloud } from "@/lib/cloud-sync";
 import { loginToGoogle, logoutFromGoogle, listDriveProjects, downloadFromDrive, syncProjectToDrive } from "@/lib/drive";
-import { p2p } from "@/lib/p2p";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { SignInButton, UserButton, SignedIn, SignedOut, useAuth } from "@clerk/nextjs";
 import {
     FolderOpen, Download, CloudUpload, CloudDownload,
-    Share2, Radio, HardDrive, FileAudio, Package, Menu, LogIn, ExternalLink, Copy, Check, Loader2, RefreshCw
+    HardDrive, FileAudio, Package, Menu, LogIn, ExternalLink, Loader2, RefreshCw, Check, User
 } from "lucide-react";
 import { useToast } from "./ui/ToastProvider";
 import { useModal } from "./ui/ModalProvider";
@@ -19,21 +18,18 @@ export function ProjectControl() {
     const { project, saveProject, loadProject, exportAudio } = useStore();
     const projects = useProjects();
     const [isOpen, setIsOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState<'local' | 'cloud' | 'drive' | 'p2p'>('local');
+    const [activeTab, setActiveTab] = useState<'local' | 'cloud' | 'drive'>('local'); // Removed P2P type
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { isSignedIn } = useAuth();
 
-    // P2P State
-    const [peerId, setPeerId] = useState<string | null>(null);
-    const [isP2PConnectLoading, setIsP2PConnectLoading] = useState(false);
-    const [hasCopied, setHasCopied] = useState(false);
+    // Removed P2P State (peerId, isP2PConnectLoading, hasCopied)
 
     // Drive State
     const [isDriveAuth, setIsDriveAuth] = useState(false);
     const [isDriveSyncing, setIsDriveSyncing] = useState(false);
 
-    const { toast, success, error } = useToast();
-    const { alert, confirm, prompt } = useModal();
+    const { success, error } = useToast();
+    const { alert, confirm } = useModal();
 
     // Check Drive Auth on mount
     useEffect(() => {
@@ -165,7 +161,7 @@ export function ProjectControl() {
             const files = await listDriveProjects();
             if (files && files.length > 0) {
                 // TODO: Replace with a nicer file picker modal in future
-                const choice = await confirm(`Found ${files.length} projects. Load '${files[0].name}'?`);
+                const choice = await confirm(`Found ${files.length} projects.Load '${files[0].name}' ? `);
                 if (choice) {
                     const blob = await downloadFromDrive(files[0].id);
                     const file = new File([blob], files[0].name, { type: 'application/zip' });
@@ -185,46 +181,7 @@ export function ProjectControl() {
 
     // --- P2P Handlers ---
 
-    const handleStartSession = async () => {
-        try {
-            setIsP2PConnectLoading(true);
-            const id = await p2p.initialize(true);
-            setPeerId(id);
-            success("Session started!");
-        } catch (e) {
-            console.error(e);
-            error("Failed to start session.");
-        } finally {
-            setIsP2PConnectLoading(false);
-        }
-    };
-
-    const handleJoinSession = async () => {
-        const id = await prompt("Enter Host ID to join:");
-        if (id) {
-            try {
-                setIsP2PConnectLoading(true);
-                await p2p.initialize(false);
-                p2p.connect(id);
-                setPeerId("CONNECTED"); // Virtual state for UI
-                success("Joined session!");
-            } catch (e) {
-                console.error(e);
-                error("Failed to join session");
-            } finally {
-                setIsP2PConnectLoading(false);
-            }
-        }
-    };
-
-    const copyPeerId = () => {
-        if (peerId) {
-            navigator.clipboard.writeText(peerId);
-            setHasCopied(true);
-            setTimeout(() => setHasCopied(false), 2000);
-            toast("Session ID copied!");
-        }
-    };
+    // Removed P2P Logic from here (Moved to CollabMenu)
 
     return (
         <div className="relative z-50 flex items-center gap-2">
@@ -243,7 +200,7 @@ export function ProjectControl() {
                         className="p-2 md:bg-secondary text-secondary-foreground rounded-lg hover:opacity-80"
                         aria-label="Sign In"
                     >
-                        <LogIn size={16} />
+                        <User size={16} />
                     </button>
                 </SignInButton>
             </SignedOut>
@@ -273,11 +230,10 @@ export function ProjectControl() {
                                 {[
                                     { id: 'local', icon: HardDrive, label: 'Projects' },
                                     { id: 'drive', icon: ExternalLink, label: 'Google Drive' },
-                                    { id: 'p2p', icon: Radio, label: 'P2P Session' },
                                 ].map(tab => (
                                     <button
                                         key={tab.id}
-                                        onClick={() => setActiveTab(tab.id as 'local' | 'drive' | 'p2p')}
+                                        onClick={() => setActiveTab(tab.id as 'local' | 'drive')}
                                         className={`flex-1 flex items-center justify-center p-2 rounded-lg transition-all ${activeTab === tab.id
                                             ? "bg-background shadow-sm text-primary"
                                             : "hover:bg-background/50 text-muted-foreground"
@@ -430,51 +386,6 @@ export function ProjectControl() {
                                                 >
                                                     <Download size={16} className="text-muted-foreground" />
                                                     <span>Open from Drive</span>
-                                                </button>
-                                            </>
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* P2P TAB */}
-                                {activeTab === 'p2p' && (
-                                    <div className="space-y-2 p-2">
-                                        {peerId ? (
-                                            <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
-                                                <div className="text-[10px] font-bold text-primary mb-1 flex justify-between items-center">
-                                                    <span>SESSION ID</span>
-                                                    <button onClick={copyPeerId} className="text-primary hover:text-primary/80 transition-colors">
-                                                        {hasCopied ? <Check size={12} /> : <Copy size={12} />}
-                                                    </button>
-                                                </div>
-                                                <div className="text-xs font-mono break-all select-all bg-background p-2 rounded border border-border flex items-center justify-between gap-2">
-                                                    <span className="truncate">{peerId}</span>
-                                                </div>
-                                                <div className="text-[10px] text-muted-foreground mt-2 text-center">
-                                                    Share this ID with a friend to jam.
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <button
-                                                    onClick={handleStartSession}
-                                                    disabled={isP2PConnectLoading}
-                                                    className="w-full py-2 bg-primary text-primary-foreground rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-50 transition-opacity"
-                                                >
-                                                    {isP2PConnectLoading ? <Loader2 size={16} className="animate-spin" /> : <Radio size={16} />}
-                                                    Host Session
-                                                </button>
-                                                <div className="relative">
-                                                    <div className="absolute inset-x-0 top-1/2 h-px bg-border"></div>
-                                                    <div className="relative text-center"><span className="bg-surface px-2 text-[10px] text-muted-foreground">OR</span></div>
-                                                </div>
-                                                <button
-                                                    onClick={handleJoinSession}
-                                                    disabled={isP2PConnectLoading}
-                                                    className="w-full py-2 bg-muted text-foreground rounded-lg text-xs font-bold hover:bg-muted/80 flex items-center justify-center gap-2 border border-border disabled:opacity-50"
-                                                >
-                                                    {isP2PConnectLoading ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />}
-                                                    Join Session
                                                 </button>
                                             </>
                                         )}

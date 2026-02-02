@@ -41,9 +41,10 @@ export const playLoop = (trackId: string, sync = true) => {
     const player = loopPlayers[trackId];
     if (player) {
          if (sync && Tone.Transport.state === "started") {
-             // Try to sync to next measure if transport running
-             // simple start for now
-             player.start(); 
+             // Quantize to next measure
+             const nextMeasure = Tone.Transport.nextSubdivision("1m");
+             player.start(nextMeasure);
+             console.log(`⏳ Loop ${trackId} scheduled for ${nextMeasure}`);
          } else {
              player.start();
          }

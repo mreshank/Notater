@@ -45,7 +45,16 @@ export async function POST(req: Request) {
                 "key": "Key (e.g., F Minor)",
                 "description": "Short 1-sentence vibe description.",
                 "instruments": ["List", "Of", "3-5", "Instruments"],
-                "chordProgression": "Optional chord numerals (e.g. i - VI - III - VII)"
+                "chordProgression": "Optional chord numerals (e.g. i - VI - III - VII)",
+                "sequencerPattern": {
+                   "kick": [boolean... 16 steps], 
+                   "snare": [boolean... 16 steps],
+                   "hihat": [boolean... 16 steps],
+                   "clap": [boolean... 16 steps]
+                },
+                "pianoNotes": [
+                    { "pitch": "C4", "step": 0, "duration": 4 } // Duration in 16th notes
+                ]
             }
         `;
 

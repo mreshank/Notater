@@ -153,13 +153,27 @@ function getDrumConfig() {
 
 export type DrumType = "kick" | "snare" | "hihat" | "hihatOpen" | "clap" | "tom1" | "tom2" | "crash" | "ride";
 
+
+import { mixer } from "./mixer";
+
 export function playDrum(type: DrumType) {
     const config = getDrumConfig()[type];
     const synth = config.synth();
     
+    // Try to find a mixer channel for this drum
+    // We Map drum types to channel IDs. Default to specific name, or 'drums' bus if we had one.
+    // Our store uses 'kick', 'snare', 'hihat', 'clap'. Others might need a generic 'percussion' channel or own channel.
+    // For now detailed mapping:
+    let channelId = type; 
+    // If we only have 4 channels in sequencer, maybe map tom => kick? No, let's look for exact match.
+    // If no channel found, maybe fallback to 'drums' or Master.
+    
+    const channel = mixer.getChannel(channelId);
+    const destination = channel ? channel.input : Tone.getDestination();
+
     if (typeof synth === 'object' && 'membrane' in synth) {
-        synth.membrane.toDestination();
-        synth.noise.toDestination();
+        synth.membrane.connect(destination);
+        synth.noise.connect(destination);
         synth.membrane.triggerAttackRelease(config.note!, config.duration);
         synth.noise.triggerAttackRelease(config.duration);
         setTimeout(() => {
@@ -167,15 +181,15 @@ export function playDrum(type: DrumType) {
             synth.noise.dispose();
         }, 2000);
     } else if (type === 'clap') {
-        (synth as Tone.NoiseSynth).toDestination();
+        (synth as Tone.NoiseSynth).connect(destination);
         (synth as Tone.NoiseSynth).triggerAttackRelease(config.duration);
         setTimeout(() => (synth as Tone.NoiseSynth).dispose(), 2000);
     } else if (config.note) {
-        (synth as Tone.MembraneSynth).toDestination();
+        (synth as Tone.MembraneSynth).connect(destination);
         (synth as Tone.MembraneSynth).triggerAttackRelease(config.note, config.duration);
         setTimeout(() => (synth as Tone.MembraneSynth).dispose(), 2000);
     } else {
-        (synth as Tone.MetalSynth).toDestination();
+        (synth as Tone.MetalSynth).connect(destination);
         (synth as Tone.MetalSynth).triggerAttackRelease(config.note!, config.duration);
         setTimeout(() => (synth as Tone.MetalSynth).dispose(), 2000);
     }

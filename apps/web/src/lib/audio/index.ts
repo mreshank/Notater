@@ -6,6 +6,7 @@
 export * from "./context";
 export * from "./synth";
 export * from "./effects";
+export * from "./mixer";
 
 // Re-export Tone for advanced usage
 export { Tone } from "./context";

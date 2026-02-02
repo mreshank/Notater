@@ -14,7 +14,7 @@ export function LooperPanel() {
             {/* Floating Toggle Button */}
             {isOpen ? null : <motion.button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`fixed bottom-24 right-6 z-50 w-12 h-12 rounded-full shadow-2xl flex items-center justify-center transition-colors bg-primary text-primary-foreground `}
+                className={`fixed bottom-24 right-6 z-30 w-12 h-12 rounded-full shadow-2xl flex items-center justify-center transition-colors bg-primary text-primary-foreground `}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 title="Toggle Looper"

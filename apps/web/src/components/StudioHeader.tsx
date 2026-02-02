@@ -3,12 +3,14 @@
 import { useStore } from "@/lib/store";
 import {
     Play, Pause, Square, Circle, Save, Download,
-    Music, FileText, Moon, Sun, Trees, Waves, Sunset, MoonStar, Zap,
+    FileText, Moon, Sun, Trees, Waves, Sunset, MoonStar, Zap,
     ChevronLeft, ChevronRight, Loader2, XIcon, Menu
 } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import { ProjectControl } from "@/components/ProjectControl";
+import { CollabMenu } from "@/components/CollabMenu";
 
 export function StudioHeader() {
     const { project, isPlaying, setBpm, setBarCount, togglePlay, toggleRecord, isRecording, isLoading, saveProject, exportAudio, theme, setTheme, setProjectNotes } = useStore();
@@ -27,7 +29,7 @@ export function StudioHeader() {
                         <div className="group relative w-8 h-8 sm:w-9 sm:h-9 cursor-pointer shrink-0">
                             <div className="absolute inset-0 bg-gradient-to-br from-primary to-purple-600 rounded-xl blur-sm opacity-50 group-hover:opacity-100 transition-opacity"></div>
                             <div className="relative w-full h-full bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-inner border border-white/10">
-                                <Music className="text-white w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                                <Image src="/web-app-manifest-192x192.png" alt="Notater" width={32} height={32} className="w-5 h-5 sm:w-6 sm:h-6 object-contain shadow-sm" />
                             </div>
                         </div>
                         {/* Project Name - Hidden on mobile */}
@@ -243,9 +245,10 @@ export function StudioHeader() {
                         <Menu size={20} />
                     </button>
 
-                    {/* Desktop: ProjectControl */}
-                    <div className="hidden sm:block">
+                    {/* Desktop: Collab & Project */}
+                    <div className="hidden sm:flex items-center gap-2">
                         <div className="hidden sm:block h-5 w-px bg-border/50 mx-1"></div>
+                        <CollabMenu />
                         <ProjectControl />
                     </div>
                 </div>
@@ -268,14 +271,15 @@ export function StudioHeader() {
                             initial={{ opacity: 0, x: 100 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: 100 }}
-                            className="fixed top-0 right-0 w-64 h-full bg-background border-l border-border z-50 sm:hidden flex flex-col"
+                            className="fixed top-0 right-0 w-72 h-full bg-background border-l border-border z-50 sm:hidden flex flex-col"
                         >
-                            <div className="flex items-center justify-between p-4 border-b border-border">
+                            <div className="flex items-center justify-between px-4 py-2.5 pb-[9px] border-b border-border">
                                 <span className="font-bold text-sm">Menu</span>
                                 <span className="flex items-center gap-2">
+                                    <CollabMenu />
                                     <ProjectControl />
                                     <button onClick={() => setShowMobileMenu(false)} className="p-1 rounded hover:bg-muted">
-                                        <XIcon size={18} />
+                                        <XIcon size={20} />
                                     </button>
                                 </span>
                             </div>

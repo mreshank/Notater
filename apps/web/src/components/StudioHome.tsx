@@ -15,13 +15,17 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { ViewMode } from "./StudioNav";
+import { useSessionTimer } from "@/hooks/useSessionTimer";
+import { useMidi } from "@/hooks/useMidi";
 
 interface StudioHomeProps {
     onNavigate: (view: ViewMode) => void;
 }
 
 export function StudioHome({ onNavigate }: StudioHomeProps) {
+    useMidi(); // Enable MIDI support
     const { project } = useStore();
+    const sessionTime = useSessionTimer();
     const [aiLoading, setAiLoading] = useState(false);
     const [aiSuggestion, setAiSuggestion] = useState<{
         title: string;
@@ -31,6 +35,8 @@ export function StudioHome({ onNavigate }: StudioHomeProps) {
         genre: string;
         instruments: string[];
         chordProgression?: string;
+        sequencerPattern?: Record<string, boolean[]>;
+        pianoNotes?: { pitch: string; step: number; duration: number }[];
     } | null>(null);
 
     const handleAiSuggest = async (type: "inspire" | "chord" | "trap") => {
@@ -78,7 +84,7 @@ export function StudioHome({ onNavigate }: StudioHomeProps) {
                         <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase font-bold">
                             <Clock size={12} /> Session
                         </div>
-                        <div className="text-xl font-mono font-bold mt-1">00:42</div>
+                        <div className="text-xl font-mono font-bold mt-1">{sessionTime}</div>
                     </div>
                     <div className="bg-muted/30 p-3 rounded-xl border border-border/50 flex flex-col items-center min-w-[100px]">
                         <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase font-bold">
@@ -188,6 +194,25 @@ export function StudioHome({ onNavigate }: StudioHomeProps) {
                                         store.setProjectName(aiSuggestion.title);
                                         store.setBpm(aiSuggestion.bpm);
 
+                                        // Apply Sequencer Pattern
+                                        if (aiSuggestion.sequencerPattern) {
+                                            store.setSequencerGrid(aiSuggestion.sequencerPattern);
+                                        }
+
+                                        // Apply Piano Notes
+                                        if (aiSuggestion.pianoNotes) {
+                                            // Clear existing notes first ?? Maybe optional. Let's append or clear.
+                                            // store.clearPianoNotes(); // If we want to replace
+                                            aiSuggestion.pianoNotes.forEach((n: any) => {
+                                                store.addPianoNote({
+                                                    id: Math.random().toString(36).substr(2, 9),
+                                                    pitch: n.pitch,
+                                                    step: n.step,
+                                                    duration: n.duration
+                                                });
+                                            });
+                                        }
+
                                         // Build comprehensive notes from the AI suggestion
                                         const noteLines = [
                                             `🎵 ${aiSuggestion.title}`,
@@ -202,7 +227,7 @@ export function StudioHome({ onNavigate }: StudioHomeProps) {
                                         }
                                         store.setProjectNotes(noteLines.join("\n"));
 
-                                        toast.success(`Applied: "${aiSuggestion.title}" @ ${aiSuggestion.bpm} BPM`, { icon: "🚀" });
+                                        toast.success(`Applied: "${aiSuggestion.title}"`, { icon: "🚀" });
                                     }}
                                     className="px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-lg hover:bg-primary/90 transition-colors"
                                 >
