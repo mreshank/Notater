@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useMemo, useState, useEffect } from "react";
+import { Suspense, useCallback, useMemo, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 // import { useStore } from "@/lib/store"; // Removed unused import
 import { StudioHeader } from "@/components/StudioHeader";
@@ -16,6 +16,12 @@ import dynamic from "next/dynamic";
 const LoadingState = () => (
     <div className="flex-1 flex items-center justify-center text-muted-foreground/50 animate-pulse">
         <Loader2 className="animate-spin mr-2" /> Loading Instrument...
+    </div>
+);
+
+const PageLoadingState = () => (
+    <div className="h-full w-full flex items-center justify-center bg-background">
+        <Loader2 className="animate-spin text-primary" size={32} />
     </div>
 );
 
@@ -37,7 +43,7 @@ const Mixer = dynamic(() => import("@/components/Mixer").then(mod => mod.Mixer),
 
 const VALID_VIEWS: ViewMode[] = ["home", "keys", "drums", "seq", "piano", "mix"];
 
-export default function StudioPage() {
+function StudioContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [showShortcuts, setShowShortcuts] = useState(false);
@@ -194,3 +200,10 @@ export default function StudioPage() {
     );
 }
 
+export default function StudioPage() {
+    return (
+        <Suspense fallback={<PageLoadingState />}>
+            <StudioContent />
+        </Suspense>
+    );
+}

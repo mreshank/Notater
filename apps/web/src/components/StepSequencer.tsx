@@ -165,20 +165,22 @@ export function StepSequencer() {
                             <span className="text-xs font-bold" style={{ color: row.color }}>
                                 {row.label}
                             </span>
-                            <div className="hidden group-hover:flex gap-1">
+                            <div className="flex sm:hidden sm:group-hover:flex gap-1">
                                 <button
                                     onClick={() => fillRow(row.id)}
-                                    className="p-0.5 text-foreground/50 hover:text-primary transition-colors"
+                                    className="p-1 sm:p-0.5 text-foreground/50 hover:text-primary transition-colors touch-manipulation"
                                     title="Fill row"
+                                    aria-label={`Fill ${row.label} row`}
                                 >
-                                    <Sparkles size={10} />
+                                    <Sparkles size={12} />
                                 </button>
                                 <button
                                     onClick={() => clearRow(row.id)}
-                                    className="p-0.5 text-foreground/50 hover:text-destructive transition-colors"
+                                    className="p-1 sm:p-0.5 text-foreground/50 hover:text-destructive transition-colors touch-manipulation"
                                     title="Clear row"
+                                    aria-label={`Clear ${row.label} row`}
                                 >
-                                    <Eraser size={10} />
+                                    <Eraser size={12} />
                                 </button>
                             </div>
                         </div>
