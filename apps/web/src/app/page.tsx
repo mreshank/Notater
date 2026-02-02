@@ -6,6 +6,30 @@ export default function Home() {
       {/* Background Gradient Animation */}
       <div className="absolute inset-0 -z-10 bg-linear-to-br from-primary/20 via-background to-secondary/20 animate-pulse" />
 
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "Notater",
+            "applicationCategory": "MusicApplication",
+            "operatingSystem": "Web",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "description": "An offline-first, collaborative music production environment in the browser.",
+            "featureList": "16-step sequencer, Synthesizer, P2P Collaboration, Offline Mode",
+            "author": {
+              "@type": "Person",
+              "name": "mreshank"
+            }
+          }),
+        }}
+      />
+
       <div className="text-center space-y-4 z-10">
         <h1 className="text-6xl font-black tracking-tighter bg-clip-text text-transparent bg-linear-to-r from-primary to-secondary drop-shadow-sm">
           NOTATER

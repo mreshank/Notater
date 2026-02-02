@@ -1,6 +1,18 @@
 {
     "name": "notater-monorepo",
+    "version": "0.1.1",
+    "description": "A modern, offline-first music production ecosystem built with TypeScript.",
     "private": true,
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/mreshank/Notate.git"
+    },
+    "author": "mreshank",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/mreshank/Notate/issues"
+    },
+    "homepage": "https://github.com/mreshank/Notate#readme",
     "packageManager": "pnpm@9.15.0",
     "scripts": {
         "dev": "pnpm -r dev",
