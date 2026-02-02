@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 // import { useStore } from "@/lib/store"; // Removed unused import
 import { StudioHeader } from "@/components/StudioHeader";
@@ -7,6 +7,8 @@ import { LooperPanel } from "@/components/LooperPanel";
 import { StudioHome } from "@/components/StudioHome";
 import { StudioNav, ViewMode } from "@/components/StudioNav";
 import { StudioErrorBoundary } from "@/components/StudioErrorBoundary";
+import { KeyboardShortcutsModal } from "@/components/KeyboardShortcutsModal";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -38,6 +40,7 @@ const VALID_VIEWS: ViewMode[] = ["home", "keys", "drums", "seq", "piano", "mix"]
 export default function StudioPage() {
     const searchParams = useSearchParams();
     const router = useRouter();
+    const [showShortcuts, setShowShortcuts] = useState(false);
 
     // Get the active view from URL, default to "home"
     const activeView = useMemo(() => {
@@ -56,8 +59,38 @@ export default function StudioPage() {
             router.push(`/studio?tab=${view}`, { scroll: false });
         }
     }, [router]);
+
+    // Looper panel visibility state
+    const [showLooper, setShowLooper] = useState(true);
+
+    // Initialize keyboard shortcuts
+    const { shortcuts } = useKeyboardShortcuts({
+        onNavigate: (view) => setActiveView(view as ViewMode),
+        onShowShortcuts: () => setShowShortcuts(true),
+        onToggleLooper: () => setShowLooper(prev => !prev),
+        activeView,
+    });
+
+    // Close modal on Escape
+    useEffect(() => {
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === "Escape" && showShortcuts) {
+                setShowShortcuts(false);
+            }
+        };
+        window.addEventListener("keydown", handleEscape);
+        return () => window.removeEventListener("keydown", handleEscape);
+    }, [showShortcuts]);
+
     return (
         <div className="h-full w-full flex flex-col bg-background transition-colors duration-500">
+            {/* Keyboard Shortcuts Modal */}
+            <KeyboardShortcutsModal
+                isOpen={showShortcuts}
+                onClose={() => setShowShortcuts(false)}
+                shortcuts={shortcuts}
+            />
+
             {/* Global Studio Header */}
             <StudioHeader />
 
@@ -151,8 +184,8 @@ export default function StudioPage() {
                     </div>
                 </main>
 
-                {/* Global Looper Panel */}
-                <LooperPanel />
+                {/* Global Looper Panel - Toggle with 'L' key */}
+                {showLooper && <LooperPanel />}
             </div>
 
             {/* Bottom Control / Nav */}
