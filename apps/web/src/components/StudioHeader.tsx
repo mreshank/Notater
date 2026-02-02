@@ -6,45 +6,15 @@ import {
     Music, FileText, Moon, Sun, Trees, Waves, Sunset, MoonStar, Zap,
     ChevronLeft, ChevronRight, Loader2, XIcon
 } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "sonner";
 import { ProjectControl } from "@/components/ProjectControl";
-import { useRouter } from "next/navigation"; // Added import for useRouter
-import { useAuth } from "@clerk/nextjs"; // Added import for useAuth
 
 export function StudioHeader() {
     const { project, isPlaying, setBpm, setBarCount, togglePlay, toggleRecord, isRecording, isLoading, saveProject, exportAudio, theme, setTheme, setProjectNotes } = useStore();
-    const router = useRouter();
-    const { isSignedIn } = useAuth();
 
     const [showNotes, setShowNotes] = useState(false);
     const [showThemeMenu, setShowThemeMenu] = useState(false);
-    const [showMainMenu, setShowMainMenu] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
-    const handleFileImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            try {
-                const text = e.target?.result as string;
-                const data = JSON.parse(text);
-                // Basic validation
-                if (data.id && data.name) {
-                    useStore.setState({ project: data });
-                    toast.success("Project imported successfully");
-                } else {
-                    toast.error("Invalid project file");
-                }
-            } catch (err) {
-                toast.error("Failed to parse project file");
-            }
-        };
-        reader.readAsText(file);
-    };
 
     return (
         <>
@@ -102,8 +72,7 @@ export function StudioHeader() {
                                     key={i}
                                     className={`w-1.5 bg-primary rounded-t-sm transition-all duration-300 ${isPlaying ? "animate-pulse" : "h-1 opacity-20"}`}
                                     style={{
-                                        height: isPlaying ? `${30 + (Math.sin(i + Date.now()) * 50) + Math.random() * 40}%` : "10%",
-                                        // height: isPlaying ? `${40 + (Math.sin(i * 0.5) * 30)}%` : "10%",
+                                        height: isPlaying ? `${40 + (Math.sin(i * 0.5) * 30)}%` : "10%",
                                         animationDelay: `${i * 0.05}s`
                                     }}
                                 />
@@ -239,7 +208,7 @@ export function StudioHeader() {
                                             <button
                                                 key={t}
                                                 onClick={() => {
-                                                    setTheme(t as any);
+                                                    setTheme(t as "cyber" | "lofi" | "neo" | "forest" | "ocean" | "sunset" | "midnight");
                                                     setShowThemeMenu(false);
                                                 }}
                                                 className={`flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors ${theme === t ? "bg-primary/20 text-primary font-medium" : "hover:bg-muted/80"}`}

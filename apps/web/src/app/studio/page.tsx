@@ -1,23 +1,61 @@
 "use client";
-import { useState } from "react";
+import { useCallback, useMemo } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 // import { useStore } from "@/lib/store"; // Removed unused import
-import { MiniKeyboard } from "@/components/MiniKeyboard";
-import { Drums } from "@/components/Drums";
-import { StepSequencer } from "@/components/StepSequencer";
-import { PianoRoll } from "@/components/PianoRoll";
-import { Mixer } from "@/components/Mixer";
 import { StudioHeader } from "@/components/StudioHeader";
 import { LooperPanel } from "@/components/LooperPanel";
+import { StudioHome } from "@/components/StudioHome";
+import { StudioNav, ViewMode } from "@/components/StudioNav";
+import { StudioErrorBoundary } from "@/components/StudioErrorBoundary";
 import { motion, AnimatePresence } from "framer-motion";
-import { ListMusic, LayoutGrid, AudioWaveform, Disc, SlidersHorizontal } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import dynamic from "next/dynamic";
 
-type ViewMode = "keys" | "drums" | "seq" | "piano" | "mix";
+const LoadingState = () => (
+    <div className="flex-1 flex items-center justify-center text-muted-foreground/50 animate-pulse">
+        <Loader2 className="animate-spin mr-2" /> Loading Instrument...
+    </div>
+);
+
+const MiniKeyboard = dynamic(() => import("@/components/MiniKeyboard").then(mod => mod.MiniKeyboard), {
+    loading: () => <LoadingState />
+});
+const Drums = dynamic(() => import("@/components/Drums").then(mod => mod.Drums), {
+    loading: () => <LoadingState />
+});
+const StepSequencer = dynamic(() => import("@/components/StepSequencer").then(mod => mod.StepSequencer), {
+    loading: () => <LoadingState />
+});
+const PianoRoll = dynamic(() => import("@/components/PianoRoll").then(mod => mod.PianoRoll), {
+    loading: () => <LoadingState />
+});
+const Mixer = dynamic(() => import("@/components/Mixer").then(mod => mod.Mixer), {
+    loading: () => <LoadingState />
+});
+
+const VALID_VIEWS: ViewMode[] = ["home", "keys", "drums", "seq", "piano", "mix"];
 
 export default function StudioPage() {
-    const [activeView, setActiveView] = useState<ViewMode>("seq");
-    // const [midiConnected, setMidiConnected] = useState(false); // TODO: Re-integrate MIDI status if needed in header
+    const searchParams = useSearchParams();
+    const router = useRouter();
 
+    // Get the active view from URL, default to "home"
+    const activeView = useMemo(() => {
+        const tabParam = searchParams.get("tab");
+        if (tabParam && VALID_VIEWS.includes(tabParam as ViewMode)) {
+            return tabParam as ViewMode;
+        }
+        return "home";
+    }, [searchParams]);
 
+    // Update URL when view changes
+    const setActiveView = useCallback((view: ViewMode) => {
+        if (view === "home") {
+            router.push("/studio", { scroll: false });
+        } else {
+            router.push(`/studio?tab=${view}`, { scroll: false });
+        }
+    }, [router]);
     return (
         <div className="h-full w-full flex flex-col bg-background transition-colors duration-500">
             {/* Global Studio Header */}
@@ -31,6 +69,19 @@ export default function StudioPage() {
                     {/* Instrument View */}
                     <div className="flex-1 flex items-center justify-center p-4 z-10 overflow-auto">
                         <AnimatePresence mode="wait">
+                            {activeView === "home" && (
+                                <motion.div
+                                    key="home"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -20 }}
+                                    className="w-full h-full max-w-7xl mx-auto"
+                                >
+                                    <StudioErrorBoundary componentName="Studio Home">
+                                        <StudioHome onNavigate={(view) => setActiveView(view)} />
+                                    </StudioErrorBoundary>
+                                </motion.div>
+                            )}
                             {activeView === "keys" && (
                                 <motion.div
                                     key="keys"
@@ -39,7 +90,9 @@ export default function StudioPage() {
                                     exit={{ opacity: 0, y: -20 }}
                                     className="w-full max-w-3xl"
                                 >
-                                    <MiniKeyboard />
+                                    <StudioErrorBoundary componentName="Keyboard">
+                                        <MiniKeyboard />
+                                    </StudioErrorBoundary>
                                 </motion.div>
                             )}
                             {activeView === "drums" && (
@@ -50,7 +103,9 @@ export default function StudioPage() {
                                     exit={{ opacity: 0, y: -20 }}
                                     className="w-full max-w-2xl"
                                 >
-                                    <Drums />
+                                    <StudioErrorBoundary componentName="Drum Machine">
+                                        <Drums />
+                                    </StudioErrorBoundary>
                                 </motion.div>
                             )}
                             {activeView === "seq" && (
@@ -61,7 +116,9 @@ export default function StudioPage() {
                                     exit={{ opacity: 0, y: -20 }}
                                     className="w-full"
                                 >
-                                    <StepSequencer />
+                                    <StudioErrorBoundary componentName="Sequencer">
+                                        <StepSequencer />
+                                    </StudioErrorBoundary>
                                 </motion.div>
                             )}
                             {activeView === "piano" && (
@@ -72,7 +129,9 @@ export default function StudioPage() {
                                     exit={{ opacity: 0, y: -20 }}
                                     className="w-full h-full"
                                 >
-                                    <PianoRoll />
+                                    <StudioErrorBoundary componentName="Piano Roll">
+                                        <PianoRoll />
+                                    </StudioErrorBoundary>
                                 </motion.div>
                             )}
                             {activeView === "mix" && (
@@ -83,7 +142,9 @@ export default function StudioPage() {
                                     exit={{ opacity: 0, y: -20 }}
                                     className="w-full h-full p-4"
                                 >
-                                    <Mixer />
+                                    <StudioErrorBoundary componentName="Mixer">
+                                        <Mixer />
+                                    </StudioErrorBoundary>
                                 </motion.div>
                             )}
                         </AnimatePresence>
@@ -95,48 +156,8 @@ export default function StudioPage() {
             </div>
 
             {/* Bottom Control / Nav */}
-            <nav className="h-20 border-t border-foreground/10 glass flex items-center justify-around shrink-0 pb-safe z-40 bg-background/80 backdrop-blur-md">
-                <button
-                    onClick={() => setActiveView("seq")}
-                    className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${activeView === "seq" ? "opacity-100 text-primary" : "opacity-50 hover:opacity-100"
-                        }`}
-                >
-                    <ListMusic size={24} />
-                    <span className="text-xs font-bold">Seq</span>
-                </button>
-                <button
-                    onClick={() => setActiveView("piano")}
-                    className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${activeView === "piano" ? "opacity-100 text-primary" : "opacity-50 hover:opacity-100"
-                        }`}
-                >
-                    <LayoutGrid size={24} />
-                    <span className="text-xs font-bold">Roll</span>
-                </button>
-                <button
-                    onClick={() => setActiveView("keys")}
-                    className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${activeView === "keys" ? "opacity-100 text-primary" : "opacity-50 hover:opacity-100"
-                        }`}
-                >
-                    <AudioWaveform size={24} />
-                    <span className="text-xs font-bold">Keys</span>
-                </button>
-                <button
-                    onClick={() => setActiveView("drums")}
-                    className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${activeView === "drums" ? "opacity-100 text-primary" : "opacity-50 hover:opacity-100"
-                        }`}
-                >
-                    <Disc size={24} />
-                    <span className="text-xs font-bold">Drums</span>
-                </button>
-                <button
-                    onClick={() => setActiveView("mix")}
-                    className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${activeView === "mix" ? "opacity-100 text-primary" : "opacity-50 hover:opacity-100"
-                        }`}
-                >
-                    <SlidersHorizontal size={24} className="rotate-90" />
-                    <span className="text-xs font-bold">Mix</span>
-                </button>
-            </nav>
+            <StudioNav activeView={activeView} setActiveView={setActiveView} />
         </div>
     );
 }
+

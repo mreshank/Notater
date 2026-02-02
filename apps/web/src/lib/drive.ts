@@ -7,7 +7,14 @@ declare global {
         google?: {
             accounts: {
                 oauth2: {
-                    initTokenClient: (config: any) => any;
+                    initTokenClient: (config: {
+                        client_id: string;
+                        scope: string;
+                        callback: (resp: any) => void;
+                    }) => {
+                        requestAccessToken: (opts: { prompt?: string }) => void;
+                        callback: (resp: any) => void;
+                    };
                     hasGrantedAllScopes: (token: any, scope: string) => boolean;
                     revoke: (token: string, callback: () => void) => void;
                 };
@@ -16,15 +23,15 @@ declare global {
         gapi?: {
             load: (api: string, callback: () => void) => void;
             client: {
-                init: (config: any) => Promise<void>;
-                getToken: () => any;
-                setToken: (token: any) => void;
+                init: (config: { apiKey: string; discoveryDocs: string[] }) => Promise<void>;
+                getToken: () => { access_token: string } | null;
+                setToken: (token: { access_token: string } | null) => void;
                 drive: {
                     files: {
-                        list: (params: any) => Promise<any>;
-                        get: (params: any) => Promise<any>;
-                        create: (params: any) => Promise<any>;
-                        update: (params: any) => Promise<any>;
+                        list: (params: { q?: string; fields?: string; [key: string]: unknown }) => Promise<{ result: { files: any[] } }>;
+                        get: (params: { fileId: string; alt?: string; [key: string]: unknown }) => Promise<{ body: string; result: any }>;
+                        create: (params: { resource?: any; media?: any; fields?: string; [key: string]: unknown }) => Promise<{ result: { id: string } }>;
+                        update: (params: { fileId: string; resource?: any; media?: any; fields?: string; [key: string]: unknown }) => Promise<{ result: { id: string } }>;
                     };
                 };
             };
@@ -112,12 +119,15 @@ export async function loginToGoogle(): Promise<boolean> {
     return new Promise((resolve, reject) => {
         try {
             // Override callback for this request
-            tokenClient.callback = async (resp: any) => {
+            tokenClient.callback = async (resp: { error?: string }) => {
                 if (resp.error) {
                     reject(resp);
                 }
                 isAuthorized = true;
-                localStorage.setItem("gdrive_token", JSON.stringify(window.gapi!.client.getToken()));
+                const token = window.gapi!.client.getToken();
+                if (token) {
+                  localStorage.setItem("gdrive_token", JSON.stringify(token));
+                }
                 resolve(true);
             };
 
@@ -163,7 +173,9 @@ async function ensureAppFolder(): Promise<string> {
         mimeType: 'application/vnd.google-apps.folder',
     };
     
-    const token = window.gapi!.client.getToken().access_token;
+    const tokenObj = window.gapi!.client.getToken();
+    if (!tokenObj) throw new Error("No access token");
+    const token = tokenObj.access_token;
     const res = await fetch('https://www.googleapis.com/drive/v3/files', {
         method: 'POST',
         headers: {

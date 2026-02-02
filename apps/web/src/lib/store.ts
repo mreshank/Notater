@@ -140,6 +140,7 @@ interface AppState {
   toggleRecord: () => void;
   setBpm: (bpm: number) => void;
   setBarCount: (barCount: number) => void;
+  setProjectName: (name: string) => void;
   setProjectNotes: (notes: string) => void;
   setTool: (tool: "pointer" | "pencil" | "eraser") => void;
   
@@ -329,6 +330,10 @@ export const useStore = create<AppState>((set, get) => ({
 
   toggleRecord: () => {
       set(state => ({ isRecording: !state.isRecording }));
+  },
+
+  setProjectName: (name) => {
+      set(state => ({ project: { ...state.project, name } }));
   },
 
   setProjectNotes: (notes) => {

@@ -1,26 +1,21 @@
-import { useEffect } from "react";
-import { useStore } from "./store";
-import { useAuth } from "@clerk/nextjs";
-import { StoredProject, getSample } from "./db";
+import { StoredProject } from "./db";
 import { PutBlobResult } from "@vercel/blob";
 
-// Simple sync hook
+// Simple sync hook (placeholder for future expansion)
 export function useCloudSync() {
-    const { isSignedIn, userId } = useAuth();
-    const { project, saveProject, loadProject } = useStore();
+    // const { isSignedIn, userId } = useAuth();
+    // const { project, saveProject, loadProject } = useStore();
 
     // Push local changes to cloud
     
-    const syncToCloud = async () => {
-        if (!isSignedIn) return;
-        
-        // MVP: Just exposing the API callers for now.
-        // In a real app we'd grab the full state and push it.
-    };
+    // const syncToCloud = async () => {
+    //     if (!isSignedIn) return;
+    //     
+    //     // MVP: Just exposing the API callers for now.
+    //     // In a real app we'd grab the full state and push it.
+    // };
 
-    return {
-        syncToCloud
-    };
+    return {};
 }
 
 export async function uploadSampleToBlob(file: Blob, name: string): Promise<string> {

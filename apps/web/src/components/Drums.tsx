@@ -69,7 +69,7 @@ function createEmptyGrid(): Record<DrumType, boolean[]> {
 }
 
 export function Drums() {
-    const [mode, setMode] = useState<DrumMode>("pad");
+    const [mode, setMode] = useState<DrumMode>("roll");
     const [hitDrum, setHitDrum] = useState<DrumType | null>(null);
     const [currentKit, setCurrentKit] = useState<DrumKit>("standard");
     const { isAudioInitialized, initializeAudio, isPlaying, currentStep } = useStore();
