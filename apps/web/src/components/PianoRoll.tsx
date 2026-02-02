@@ -1,8 +1,9 @@
 import { useRef, useEffect, useState, useMemo } from "react";
-import { useStore, Note } from "@/lib/store";
+import { useStore } from "@/lib/store";
+import { getDrumFromPitch } from "@/lib/audio";
 import { motion, AnimatePresence } from "framer-motion";
 import { Music, Layers, Grid3X3, Eraser, ChevronsLeftRight, MousePointer2, Pencil, Trash2 } from "lucide-react";
-import { SynthSelect } from "./SynthSelect";
+import { InstrumentSelect } from "./InstrumentSelect";
 
 // Scale patterns (in semitones from root)
 const SCALES: Record<string, number[]> = {
@@ -62,7 +63,8 @@ export function PianoRoll() {
         project,
         setBarCount,
         currentTool,
-        setTool
+        setTool,
+        pianoRollInstrument
     } = useStore();
 
     const [selectedScale, setSelectedScale] = useState<string>("minor");
@@ -114,7 +116,9 @@ export function PianoRoll() {
             newPlaying.add(note.id);
         });
 
-        setPlayingNotes(newPlaying);
+        requestAnimationFrame(() => {
+            setPlayingNotes(newPlaying);
+        });
         const timeout = setTimeout(() => setPlayingNotes(new Set()), 120);
         return () => clearTimeout(timeout);
     }, [currentStep, isPlaying, notes, playNote, isAudioInitialized, initializeAudio]);
@@ -189,11 +193,11 @@ export function PianoRoll() {
                         </select>
                         <div className="hidden sm:block w-px h-4 bg-border"></div>
                         <div className="hidden sm:block">
-                            <SynthSelect />
+                            <InstrumentSelect />
                         </div>
                     </div>
 
-                     {/* Tools Palette - Larger on mobile */}
+                    {/* Tools Palette - Larger on mobile */}
                     <div className="flex items-center gap-1 bg-zinc-900/50 p-1 sm:p-1.5 rounded-lg border border-border">
                         <button
                             onClick={() => setTool("pointer")}
@@ -269,7 +273,7 @@ export function PianoRoll() {
 
                 {/* Row 2: Advanced Controls - Collapsible on mobile */}
                 <div className={`flex items-center justify-between flex-wrap gap-2 ${showAdvanced ? 'flex' : 'hidden'} sm:flex`}>
-                    
+
 
                     {/* Zoom - Hidden on very small screens */}
                     <div className="hidden xs:flex items-center gap-2 bg-zinc-900/50 p-1.5 rounded-lg border border-border">
@@ -310,7 +314,7 @@ export function PianoRoll() {
 
                     {/* Synth - Mobile only (when advanced is open) */}
                     <div className="sm:hidden">
-                        <SynthSelect />
+                        <InstrumentSelect />
                     </div>
 
                     {/* Note Count */}
@@ -374,7 +378,11 @@ export function PianoRoll() {
                                                     } ${isRoot ? "bg-primary/5 text-primary font-bold" : ""}`}
                                                 style={{ width: PIANO_KEY_WIDTH, height: NOTE_HEIGHT }}
                                             >
-                                                <span className={isRoot ? "text-primary" : ""}>{noteName}</span>
+                                                <span className={isRoot ? "text-primary" : ""}>
+                                                    {pianoRollInstrument === 'drums'
+                                                        ? getDrumFromPitch(note).toUpperCase().slice(0, 4)
+                                                        : noteName}
+                                                </span>
                                                 <span className="opacity-30 text-[8px]">{note.slice(-1)}</span>
                                             </button>
                                         </div>

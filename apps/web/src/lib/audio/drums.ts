@@ -198,3 +198,21 @@ export function playDrum(type: DrumType) {
 export const DRUM_TYPES: DrumType[] = [
     "kick", "snare", "hihat", "hihatOpen", "clap", "tom1", "tom2", "crash", "ride"
 ];
+
+// Helper to map pitch class to drum type
+export function getDrumFromPitch(note: string): DrumType {
+    const pitchClass = note.replace(/\d+/, ""); // Remove octave numbers
+    
+    switch (pitchClass) {
+        case "C": return "kick";
+        case "D": return "snare";
+        case "D#": return "clap"; 
+        case "E": return "hihat";
+        case "F": return "hihatOpen";
+        case "F#": return "ride";
+        case "G": return "tom1";
+        case "A": return "tom2";
+        case "B": return "crash";
+        default: return "kick"; // Fallback
+    }
+}

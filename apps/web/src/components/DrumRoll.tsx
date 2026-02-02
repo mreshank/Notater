@@ -6,16 +6,16 @@ import { playDrum, DrumType, DRUM_TYPES } from "@/lib/audio/drums";
 import { useToast } from "./ui/ToastProvider";
 
 // Simple drum labels
-const DRUM_INFO: Record<DrumType, { label: string; color: string }> = {
-    kick: { label: "KICK", color: "#ec4899" },
-    snare: { label: "SNR", color: "#3b82f6" },
-    hihat: { label: "HH", color: "#fbbf24" },
-    hihatOpen: { label: "OH", color: "#f59e0b" },
-    clap: { label: "CLAP", color: "#f97316" },
-    tom1: { label: "T1", color: "#8b5cf6" },
-    tom2: { label: "T2", color: "#a855f7" },
-    crash: { label: "CRS", color: "#ef4444" },
-    ride: { label: "RDE", color: "#14b8a6" },
+const DRUM_INFO: Record<DrumType, { label: string; colorClass: string; shadowClass: string }> = {
+    kick: { label: "KICK", colorClass: "bg-pink-500", shadowClass: "shadow-pink-500/50" },
+    snare: { label: "SNR", colorClass: "bg-blue-500", shadowClass: "shadow-blue-500/50" },
+    hihat: { label: "HH", colorClass: "bg-amber-400", shadowClass: "shadow-amber-400/50" },
+    hihatOpen: { label: "OH", colorClass: "bg-amber-500", shadowClass: "shadow-amber-500/50" },
+    clap: { label: "CLAP", colorClass: "bg-orange-500", shadowClass: "shadow-orange-500/50" },
+    tom1: { label: "T1", colorClass: "bg-violet-500", shadowClass: "shadow-violet-500/50" },
+    tom2: { label: "T2", colorClass: "bg-purple-500", shadowClass: "shadow-purple-500/50" },
+    crash: { label: "CRS", colorClass: "bg-red-500", shadowClass: "shadow-red-500/50" },
+    ride: { label: "RDE", colorClass: "bg-teal-500", shadowClass: "shadow-teal-500/50" },
 };
 
 const STEPS = 16;
@@ -159,8 +159,7 @@ export function DrumRoll() {
                             <tr key={drum} className="group">
                                 <td className="pr-2 py-0.5">
                                     <span
-                                        className="text-[10px] font-bold"
-                                        style={{ color: DRUM_INFO[drum].color }}
+                                        className={`text-[10px] font-bold ${DRUM_INFO[drum].colorClass.replace('bg-', 'text-')}`}
                                     >
                                         {DRUM_INFO[drum].label}
                                     </span>
@@ -174,18 +173,10 @@ export function DrumRoll() {
                                             <motion.button
                                                 whileTap={{ scale: 0.8 }}
                                                 onClick={() => toggleStep(drum, step)}
-                                                className={`w-5 h-5 rounded-sm transition-colors ${step % 4 === 0 ? 'border-l border-border/30' : ''
-                                                    }`}
-                                                style={{
-                                                    backgroundColor: isActive
-                                                        ? DRUM_INFO[drum].color
-                                                        : 'var(--surface)',
-                                                    boxShadow: isActive
-                                                        ? `0 0 6px ${DRUM_INFO[drum].color}50`
-                                                        : 'none',
-                                                    outline: isPlayhead ? '2px solid var(--accent)' : 'none',
-                                                    outlineOffset: '-1px',
-                                                }}
+                                                className={`w-5 h-5 rounded-sm transition-all duration-200 ${step % 4 === 0 ? 'border-l border-border/30' : ''} ${isActive
+                                                    ? `${DRUM_INFO[drum].colorClass} ${DRUM_INFO[drum].shadowClass} shadow-[0_0_6px]`
+                                                    : 'bg-surface'
+                                                    } ${isPlayhead ? 'ring-2 ring-accent ring-offset-2 ring-offset-background' : ''}`}
                                             />
                                         </td>
                                     );

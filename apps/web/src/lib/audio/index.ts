@@ -7,6 +7,7 @@ export * from "./context";
 export * from "./synth";
 export * from "./effects";
 export * from "./mixer";
+export { setDrumKit, type DrumKit, getDrumFromPitch, playDrum } from "./drums";
 
 // Re-export Tone for advanced usage
 export { Tone } from "./context";

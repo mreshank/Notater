@@ -10,6 +10,10 @@ import {
   type SynthPreset,
   applyPreset,
   mixer, // Import mixer
+  setDrumKit,
+  type DrumKit,
+  getDrumFromPitch,
+  playDrum
 } from "./audio";
 import { 
     initLooper, startRecording, stopRecording, playLoop as audioPlayLoop, stopLoop as audioStopLoop, clearLoop as audioClearLoop, setLoopVolume, muteLoop 
@@ -134,7 +138,9 @@ interface AppState {
   activeView: "pianoroll" | "pads" | "sequencer" | "piano" | "mix";
   theme: "lofi" | "cyber" | "neo" | "forest" | "ocean" | "sunset" | "midnight";
   synthPreset: SynthPreset;
-  synthParams: SynthParams; 
+  synthParams: SynthParams;
+  pianoRollInstrument: "synth" | "drums";
+  activeDrumKit: DrumKit;
   looper: Record<string, LoopTrack>;
   collaborators: Collaborator[]; // P2P Presence
   
@@ -157,6 +163,8 @@ interface AppState {
   // Settings
   setTheme: (theme: "lofi" | "cyber" | "neo" | "forest" | "ocean" | "sunset" | "midnight") => void;
   setSynthPreset: (preset: SynthPreset) => void;
+  setPianoRollInstrument: (instrument: "synth" | "drums") => void;
+  setActiveDrumKit: (kit: DrumKit) => void;
   setMasterEffect: (field: string, value: number | string) => void;
 
   // Mixer Actions
@@ -278,6 +286,8 @@ export const useStore = create<AppState>((set, get) => ({
   activeView: "sequencer",
   theme: "cyber",
   synthPreset: "basic",
+  pianoRollInstrument: "synth",
+  activeDrumKit: "standard",
   synthParams: {
       oscillatorType: "triangle",
       attack: 0.02,
@@ -310,7 +320,7 @@ export const useStore = create<AppState>((set, get) => ({
       
       // 2. Drums
       ROWS.forEach(row => {
-          const ch = mixer.createChannel(row.id, row.label);
+          mixer.createChannel(row.id, row.label);
           // Apply initial state from store if needed
           const storedCh = get().mixer[row.id];
           if (storedCh) {
@@ -332,9 +342,13 @@ export const useStore = create<AppState>((set, get) => ({
       // globalEffects is now handled by mixer.setMasterChain
       globalSynth.connect(melChannel.input); 
       
-      setGlobalBpm(get().project.bpm);
-      set({ isAudioInitialized: true });
-      console.log("🎹 Synth & Mixer initialized");
+       setGlobalBpm(get().project.bpm);
+        
+       // Ensure drum kit is set
+       setDrumKit(get().activeDrumKit);
+
+       set({ isAudioInitialized: true });
+       console.log("🎹 Synth & Mixer initialized");
     } catch (err) {
       console.error("Failed to initialize audio:", err);
     }
@@ -430,6 +444,15 @@ export const useStore = create<AppState>((set, get) => ({
        // (Lazy init will handle it later if null)
     }
     set({ synthPreset: preset });
+  },
+
+  setPianoRollInstrument: (instrument) => {
+      set({ pianoRollInstrument: instrument });
+  },
+
+  setActiveDrumKit: (kit) => {
+      setDrumKit(kit);
+      set({ activeDrumKit: kit });
   },
 
   setMasterEffect: (field, value) => {
@@ -725,6 +748,15 @@ export const useStore = create<AppState>((set, get) => ({
             trackSamples: {} // Will fill below
         });
 
+        // 1.5 Load Drum Kit if present (or default)
+        if (data.activeDrumKit) {
+            setDrumKit(data.activeDrumKit);
+            set({
+                activeDrumKit: data.activeDrumKit,
+                pianoRollInstrument: data.pianoRollInstrument || "synth"
+            });
+        }
+
         // 2. Load samples from DB
         if (data.trackSampleIds) {
              const newTrackSamples: Record<string, string> = {};
@@ -749,7 +781,6 @@ export const useStore = create<AppState>((set, get) => ({
         if (globalSynth && globalEffects && data.synthPreset) {
             globalSynth.disconnect();
             globalSynth.dispose();
-            globalSynth = createSynth(data.synthPreset);
             globalSynth = createSynth(data.synthPreset);
             // Reconnect
              const melChannel = mixer.getChannel("melodic");
@@ -795,6 +826,12 @@ export const useStore = create<AppState>((set, get) => ({
         if (globalSynth) globalSynth.triggerAttackRelease(note, duration);
       });
       return;
+    }
+    const state = get();
+    if (state.pianoRollInstrument === "drums") {
+        const drumType = getDrumFromPitch(note);
+        playDrum(drumType);
+        return;
     }
     if (globalSynth) globalSynth.triggerAttackRelease(note, duration);
   },

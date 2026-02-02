@@ -8,7 +8,14 @@ import { useModal } from "./ui/ModalProvider";
 import { useUser } from "@clerk/nextjs";
 import { useStore, type Collaborator } from "@/lib/store";
 
-const getRandomColor = () => '#' + Math.floor(Math.random() * 16777215).toString(16);
+const AVATAR_COLORS = [
+    "bg-red-500", "bg-orange-500", "bg-amber-500", "bg-yellow-500",
+    "bg-lime-500", "bg-green-500", "bg-emerald-500", "bg-teal-500",
+    "bg-cyan-500", "bg-sky-500", "bg-blue-500", "bg-indigo-500",
+    "bg-violet-500", "bg-purple-500", "bg-fuchsia-500", "bg-pink-500", "bg-rose-500"
+];
+
+const getRandomColor = () => AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
 
 export function CollabMenu() {
     const [isOpen, setIsOpen] = useState(false);
@@ -194,7 +201,7 @@ export function CollabMenu() {
                                                 <div className="space-y-1">
                                                     {collaborators.map(c => (
                                                         <div key={c.id} className="flex items-center gap-2 p-1.5 rounded bg-background/50 text-xs">
-                                                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: c.color }} />
+                                                            <div className={`w-2 h-2 rounded-full ${c.color}`} />
                                                             <div className="font-medium truncate flex-1">{c.name} {c.id === peerId ? "(You)" : ""}</div>
                                                             {c.isHost && <span className="text-[9px] bg-primary/20 text-primary px-1 rounded">HOST</span>}
                                                         </div>
