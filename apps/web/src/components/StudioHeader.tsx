@@ -4,7 +4,7 @@ import { useStore } from "@/lib/store";
 import {
     Play, Pause, Square, Circle, Save, Download,
     Music, FileText, Moon, Sun, Trees, Waves, Sunset, MoonStar, Zap,
-    ChevronLeft, ChevronRight, Loader2, XIcon
+    ChevronLeft, ChevronRight, Loader2, XIcon, Menu
 } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -15,20 +15,23 @@ export function StudioHeader() {
 
     const [showNotes, setShowNotes] = useState(false);
     const [showThemeMenu, setShowThemeMenu] = useState(false);
+    const [showMobileMenu, setShowMobileMenu] = useState(false);
 
     return (
         <>
-            <header className="h-14 border-b border-border bg-background/80 backdrop-blur-md flex items-center justify-between px-4 sticky top-0 z-50">
-                {/* Left: Project Info & Actions */}
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="group relative w-9 h-9 cursor-pointer">
+            <header className="h-14 sm:h-16 border-b border-border bg-background/80 backdrop-blur-md flex items-center justify-between px-2 sm:px-4 sticky top-0 z-50">
+                {/* Left: Logo + Project Info */}
+                <div className="flex items-center gap-2 sm:gap-4">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        {/* Logo */}
+                        <div className="group relative w-8 h-8 sm:w-9 sm:h-9 cursor-pointer shrink-0">
                             <div className="absolute inset-0 bg-gradient-to-br from-primary to-purple-600 rounded-xl blur-sm opacity-50 group-hover:opacity-100 transition-opacity"></div>
                             <div className="relative w-full h-full bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-inner border border-white/10">
-                                <Music className="text-white w-4.5 h-4.5" />
+                                <Music className="text-white w-4 h-4 sm:w-4.5 sm:h-4.5" />
                             </div>
                         </div>
-                        <div className="hidden md:flex flex-col">
+                        {/* Project Name - Hidden on mobile */}
+                        <div className="hidden sm:flex flex-col">
                             <input
                                 type="text"
                                 value={project.name}
@@ -42,9 +45,9 @@ export function StudioHeader() {
                         </div>
                     </div>
 
-                    <div className="h-6 w-px bg-border/50 hidden sm:block"></div>
-
-                    <div className="flex items-center gap-1">
+                    {/* Desktop Actions - Hidden on mobile */}
+                    <div className="hidden sm:block h-6 w-px bg-border/50"></div>
+                    <div className="hidden sm:flex items-center gap-1">
                         <button onClick={saveProject} disabled={isLoading} className="p-2 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50" title="Save Project (To DB)">
                             {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                         </button>
@@ -61,12 +64,11 @@ export function StudioHeader() {
                     </div>
                 </div>
 
-                {/* Center: Transport & Scope */}
-                <div className="flex-1 flex justify-center items-center gap-6 mx-4">
-                    <div className="relative flex items-center gap-4 bg-muted/30 px-2 py-0.5 rounded-full border border-border/50 backdrop-blur-sm overflow-hidden shrink-0">
-                        {/* Visualizer Scope (Global) */}
+                {/* Center: Transport Controls - Always visible, larger on mobile */}
+                <div className="flex-1 flex justify-center items-center">
+                    <div className="relative flex items-center gap-2 sm:gap-4 bg-muted/30 px-2 sm:px-2 py-0.5 rounded-full border border-border/50 backdrop-blur-sm overflow-hidden shrink-0">
+                        {/* Visualizer Scope - Hidden on mobile */}
                         <div className="hidden absolute z-0 pointer-events-none -translate-x-2 translate-y-2 md:flex items-end gap-0.5 h-8 w-full opacity-50">
-                            {/* Static CSS animation for now as requested "Oscilloscope" placeholder */}
                             {[...Array(20)].map((_, i) => (
                                 <div
                                     key={i}
@@ -78,38 +80,42 @@ export function StudioHeader() {
                                 />
                             ))}
                         </div>
+
+                        {/* Record Button */}
                         <button
                             onClick={toggleRecord}
-                            className={`w-8 h-8 z-10 flex items-center justify-center rounded-full transition-all ${isRecording ? "bg-destructive text-white shadow-lg shadow-destructive/40 animate-pulse" : "hover:bg-destructive/10 text-destructive"
+                            className={`w-9 h-9 sm:w-8 sm:h-8 z-10 flex items-center justify-center rounded-full transition-all ${isRecording ? "bg-destructive text-white shadow-lg shadow-destructive/40 animate-pulse" : "hover:bg-destructive/10 text-destructive"
                                 }`}
                             title="Record"
                         >
-                            <Circle size={14} fill={isRecording ? "currentColor" : "none"} />
+                            <Circle size={16} className="sm:w-[14px] sm:h-[14px]" fill={isRecording ? "currentColor" : "none"} />
                         </button>
 
+                        {/* Play Button */}
                         <button
                             onClick={togglePlay}
-                            className={`w-10 h-10 z-10 flex items-center justify-center rounded-full bg-primary text-primary-foreground hover:opacity-90 transition-all ${isPlaying ? "shadow-lg shadow-primary/40 scale-105" : ""
+                            className={`w-11 h-11 sm:w-10 sm:h-10 z-10 flex items-center justify-center rounded-full bg-primary text-primary-foreground hover:opacity-90 transition-all ${isPlaying ? "shadow-lg shadow-primary/40 scale-105" : ""
                                 }`}
                             title={isPlaying ? "Pause" : "Play"}
                         >
-                            {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-1" />}
+                            {isPlaying ? <Pause size={22} className="sm:w-5 sm:h-5" fill="currentColor" /> : <Play size={22} className="sm:w-5 sm:h-5 ml-0.5" fill="currentColor" />}
                         </button>
 
+                        {/* Stop Button */}
                         <button
                             onClick={() => {
                                 if (isPlaying) togglePlay();
                             }}
-                            className="w-8 h-8 z-10 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                            className="w-9 h-9 sm:w-8 sm:h-8 z-10 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                         >
-                            <Square size={14} fill="currentColor" />
+                            <Square size={16} className="sm:w-[14px] sm:h-[14px]" fill="currentColor" />
                         </button>
                     </div>
                 </div>
 
                 {/* Right: Controls & Settings */}
-                <div className="flex items-center gap-3">
-                    {/* BPM Control */}
+                <div className="flex items-center gap-1 sm:gap-3">
+                    {/* BPM Control - Hidden on mobile */}
                     <div className="hidden md:flex group relative items-center bg-muted/40 hover:bg-muted/60 border border-border/50 rounded-lg p-0.5 transition-all focus-within:ring-1 focus-within:ring-primary/50 focus-within:bg-background/80">
                         <button
                             onClick={() => setBpm(Math.max(15, Math.floor((project.bpm - 5) / 5) * 5))}
@@ -134,12 +140,13 @@ export function StudioHeader() {
                         <button
                             onClick={() => setBpm(Math.min(300, Math.ceil((project.bpm + 5) / 5) * 5))}
                             className="p-1 hover:bg-background/50 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+                            title="Increase BPM"
                         >
                             <ChevronRight size={14} />
                         </button>
                     </div>
 
-                    {/* Bars Control */}
+                    {/* Bars Control - Hidden on mobile */}
                     <div className="hidden md:flex group relative items-center bg-muted/40 hover:bg-muted/60 border border-border/50 rounded-lg p-0.5 transition-all focus-within:ring-1 focus-within:ring-primary/50 focus-within:bg-background/80">
                         <button
                             onClick={() => {
@@ -148,6 +155,7 @@ export function StudioHeader() {
                                 if (currentIdx > 0) setBarCount(options[currentIdx - 1]);
                             }}
                             className="p-1 hover:bg-background/50 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+                            title="Decrease Bars"
                         >
                             <ChevronLeft size={14} />
                         </button>
@@ -162,6 +170,7 @@ export function StudioHeader() {
                                 if (currentIdx < options.length - 1) setBarCount(options[currentIdx + 1]);
                             }}
                             className="p-1 hover:bg-background/50 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+                            title="Increase Bars"
                         >
                             <ChevronRight size={14} />
                         </button>
@@ -169,8 +178,8 @@ export function StudioHeader() {
 
                     <div className="hidden sm:block h-5 w-px bg-border/50 mx-1"></div>
 
-                    {/* Theme Toggle & Menu */}
-                    <div className="relative">
+                    {/* Theme Toggle - Hidden on mobile, moved to drawer */}
+                    <div className="hidden sm:block relative">
                         <button
                             onClick={() => setTheme(theme === 'cyber' ? 'lofi' : 'cyber')}
                             onContextMenu={(e) => {
@@ -226,12 +235,159 @@ export function StudioHeader() {
                         </AnimatePresence>
                     </div>
 
-                    <div className="hidden sm:block h-5 w-px bg-border/50 mx-1"></div>
+                    {/* Mobile Menu Button */}
+                    <button
+                        onClick={() => setShowMobileMenu(!showMobileMenu)}
+                        className="sm:hidden p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                        <Menu size={20} />
+                    </button>
 
-                    {/* Main Menu (Replaced by ProjectControl) */}
-                    <ProjectControl />
+                    {/* Desktop: ProjectControl */}
+                    <div className="hidden sm:block">
+                        <div className="hidden sm:block h-5 w-px bg-border/50 mx-1"></div>
+                        <ProjectControl />
+                    </div>
                 </div>
             </header>
+
+            {/* Mobile Menu Drawer */}
+            <AnimatePresence>
+                {showMobileMenu && (
+                    <>
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowMobileMenu(false)}
+                            className="fixed inset-0 bg-black/50 z-40 sm:hidden"
+                        />
+                        {/* Menu */}
+                        <motion.div
+                            initial={{ opacity: 0, x: 100 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 100 }}
+                            className="fixed top-0 right-0 w-64 h-full bg-background border-l border-border z-50 sm:hidden flex flex-col"
+                        >
+                            <div className="flex items-center justify-between p-4 border-b border-border">
+                                <span className="font-bold text-sm">Menu</span>
+                                <span className="flex items-center gap-2">
+                                    <ProjectControl />
+                                    <button onClick={() => setShowMobileMenu(false)} className="p-1 rounded hover:bg-muted">
+                                        <XIcon size={18} />
+                                    </button>
+                                </span>
+                            </div>
+
+                            <div className="flex-1 p-4 space-y-4">
+                                {/* Project Name */}
+                                <div className="space-y-1">
+                                    <label className="text-xs text-muted-foreground uppercase font-bold">Project</label>
+                                    <input
+                                        type="text"
+                                        value={project.name}
+                                        onChange={(e) => useStore.setState(s => ({ project: { ...s.project, name: e.target.value } }))}
+                                        className="w-full bg-muted/50 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
+                                        placeholder="Untitled Project"
+                                    />
+                                </div>
+
+                                {/* BPM */}
+                                <div className="space-y-1">
+                                    <label className="text-xs text-muted-foreground uppercase font-bold">BPM</label>
+                                    <div className="max-w-full flex items-center gap-2 overflow-hidden">
+                                        <button
+                                            onClick={() => setBpm(Math.max(15, project.bpm - 5))}
+                                            className="p-2 bg-muted rounded-lg hover:bg-muted/80 border border-white/50"
+                                        >
+                                            <ChevronLeft size={16} />
+                                        </button>
+                                        <input
+                                            type="text"
+                                            value={project.bpm}
+                                            onChange={(e) => {
+                                                if (/^\d*$/.test(e.target.value)) setBpm(Number(e.target.value));
+                                            }}
+                                            className="md:flex-1 max-md:w-16 bg-muted/50 rounded-lg px-3 py-2 text-sm text-center font-mono font-bold outline-none focus:ring-1 focus:ring-primary"
+                                        />
+                                        <button
+                                            onClick={() => setBpm(Math.min(300, project.bpm + 5))}
+                                            className="p-2 bg-muted rounded-lg hover:bg-muted/80 border border-white/50"
+                                        >
+                                            <ChevronRight size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Bars */}
+                                <div className="space-y-1">
+                                    <label className="text-xs text-muted-foreground uppercase font-bold">Bars</label>
+                                    <div className="flex gap-2">
+                                        {[1, 2, 4, 8].map((bars) => (
+                                            <button
+                                                key={bars}
+                                                onClick={() => setBarCount(bars)}
+                                                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${project.barCount === bars ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'}`}
+                                            >
+                                                {bars}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Actions */}
+                                <div className="space-y-2 pt-4 border-t border-border">
+                                    <button
+                                        onClick={() => { saveProject(); setShowMobileMenu(false); }}
+                                        disabled={isLoading}
+                                        className="w-full flex items-center gap-3 px-3 py-2.5 bg-muted/50 rounded-lg hover:bg-muted transition-colors disabled:opacity-50"
+                                    >
+                                        {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                                        <span className="text-sm font-medium">Save Project</span>
+                                    </button>
+                                    <button
+                                        onClick={() => { exportAudio(); setShowMobileMenu(false); }}
+                                        className="w-full flex items-center gap-3 px-3 py-2.5 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+                                    >
+                                        <Download size={18} />
+                                        <span className="text-sm font-medium">Export Audio</span>
+                                    </button>
+                                    <button
+                                        onClick={() => { setShowNotes(!showNotes); setShowMobileMenu(false); }}
+                                        className="w-full flex items-center gap-3 px-3 py-2.5 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+                                    >
+                                        <FileText size={18} />
+                                        <span className="text-sm font-medium">Project Notes</span>
+                                    </button>
+                                </div>
+
+                                {/* Theme Selection */}
+                                <div className="space-y-2 pt-4 border-t border-border flex flex-col gap-2 ">
+                                    <label className="text-xs text-muted-foreground uppercase font-bold">Theme</label>
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {['cyber', 'lofi', 'neo', 'forest', 'ocean', 'sunset', 'midnight'].map((t) => (
+                                            <button
+                                                key={t}
+                                                onClick={() => setTheme(t as "cyber" | "lofi" | "neo" | "forest" | "ocean" | "sunset" | "midnight")}
+                                                className={`p-2 rounded-lg flex flex-col items-center gap-1 transition-colors ${theme === t ? "bg-primary/20 ring-1 ring-primary" : "bg-muted/50 hover:bg-muted"}`}
+                                                title={t}
+                                            >
+                                                <div className={`w-4 h-4 rounded-full ${t === 'cyber' ? 'bg-purple-500' :
+                                                    t === 'lofi' ? 'bg-orange-200' : t === 'neo' ? 'bg-cyan-400' :
+                                                        t === 'forest' ? 'bg-emerald-500' : t === 'ocean' ? 'bg-blue-500' :
+                                                            t === 'sunset' ? 'bg-orange-500' : 'bg-slate-800'}`} />
+                                                <span className="text-[9px] capitalize">{t}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+
             {/* Project Notes Overlay */}
             <AnimatePresence>
                 {
@@ -240,7 +396,7 @@ export function StudioHeader() {
                             initial={{ opacity: 0, y: -20, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                            className="absolute top-16 right-4 w-[90vw] max-w-sm bg-background/95 backdrop-blur-xl border border-border shadow-2xl rounded-xl z-50 p-4 flex flex-col gap-2"
+                            className="absolute top-14 sm:top-16 right-2 sm:right-4 w-[calc(100vw-1rem)] sm:w-[90vw] max-w-sm bg-background/95 backdrop-blur-xl border border-border shadow-2xl rounded-xl z-50 p-4 flex flex-col gap-2"
                         >
                             <div className="flex items-center justify-between">
                                 <h3 className="font-bold text-sm flex items-center gap-2">

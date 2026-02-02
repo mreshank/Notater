@@ -232,7 +232,7 @@ export function ProjectControl() {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsOpen(!isOpen)}
                 title="Project Menu"
-                className={`p-2 rounded-lg border border-border transition-colors ${isOpen ? "bg-primary text-primary-foreground" : "bg-surface hover:bg-surface-hover"}`}
+                className={`p-2 rounded-lg md:border border-border transition-colors ${isOpen ? "bg-primary text-primary-foreground" : "md:bg-surface hover:bg-surface-hover"}`}
             >
                 <Menu size={16} />
             </motion.button>
@@ -240,7 +240,7 @@ export function ProjectControl() {
             <SignedOut>
                 <SignInButton mode="modal">
                     <button
-                        className="p-2 bg-secondary text-secondary-foreground rounded-lg hover:opacity-80"
+                        className="p-2 md:bg-secondary text-secondary-foreground rounded-lg hover:opacity-80"
                         aria-label="Sign In"
                     >
                         <LogIn size={16} />

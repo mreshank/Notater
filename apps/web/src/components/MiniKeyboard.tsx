@@ -20,12 +20,12 @@ const OSCILLATORS: { type: SynthParams['oscillatorType']; label: string }[] = [
 
 // Reusable Knob Component (Vertical Range Slider styled as Knob-ish or Slider)
 const Slider = ({
-    label, value, min, max, step, onChange, unit = ""
+    label, value, min, max, step, onChange, unit = "", horizontal
 }: {
-    label: string, value: number, min: number, max: number, step: number, onChange: (v: number) => void, unit?: string
+    label: string, value: number, min: number, max: number, step: number, onChange: (v: number) => void, unit?: string, horizontal?: boolean
 }) => (
-    <div className="flex flex-col items-center gap-2 group">
-        <div className="h-28 bg-muted/30 rounded-full p-1 relative w-8 flex justify-center">
+    <div className={horizontal ? "flex flex-row items-center gap-2 group" : "flex flex-col items-center gap-2 group"}>
+        <div className={horizontal ? "h-8 bg-muted/30 rounded-full p-1 relative w-28 flex justify-center" : "h-28 bg-muted/30 rounded-full p-1 relative w-8 flex justify-center"}>
             <input
                 type="range"
                 min={min}
@@ -33,7 +33,7 @@ const Slider = ({
                 step={step}
                 value={value}
                 onChange={(e) => onChange(parseFloat(e.target.value))}
-                className="[-webkit-appearance:slider-vertical] w-full h-full opacity-50 group-hover:opacity-100 transition-opacity cursor-pointer accent-primary"
+                className={horizontal ? "[-webkit-appearance:slider-horizontal] w-full h-full opacity-50 group-hover:opacity-100 transition-opacity cursor-pointer accent-primary" : "[-webkit-appearance:slider-vertical] w-full h-full opacity-50 group-hover:opacity-100 transition-opacity cursor-pointer accent-primary"}
             />
         </div>
         <div className="text-center">
@@ -100,7 +100,7 @@ export function MiniKeyboard() {
     return (
         <div className="flex flex-col gap-4 h-full select-none">
             {/* Synth Engine Panel */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/10 rounded-xl border border-border relative overflow-hidden">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 bg-muted/10 rounded-xl border border-border relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none"></div>
 
                 {/* 1. Oscillator */}
@@ -151,15 +151,15 @@ export function MiniKeyboard() {
                     <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
                         <Zap size={14} /> FILTER & FX
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex flex-col md:flex-row justify-between">
                         <Slider label="FREQ" value={synthParams.filterCutoff} min={20} max={20000} step={100} onChange={(v) => {
                             setSynthParam("filterCutoff", v);
                             useStore.getState().setMasterEffect("filterFreq", v);
-                        }} unit="Hz" />
+                        }} unit="Hz" horizontal />
                         <Slider label="RES" value={synthParams.filterResonance} min={0} max={20} step={0.1} onChange={(v) => {
                             setSynthParam("filterResonance", v);
                             useStore.getState().setMasterEffect("filterRes", v);
-                        }} />
+                        }} horizontal />
                     </div>
                 </div>
             </div>

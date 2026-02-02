@@ -70,6 +70,7 @@ export function PianoRoll() {
     const [showScaleGuide, setShowScaleGuide] = useState(true);
     const [isFolded, setIsFolded] = useState(false);
     const [playingNotes, setPlayingNotes] = useState<Set<string>>(new Set());
+    const [showAdvanced, setShowAdvanced] = useState(false);
 
     // View Customization State
     const [zoom, setZoom] = useState(1); // 0.5 to 3
@@ -157,17 +158,18 @@ export function PianoRoll() {
 
     return (
         <div className="w-full h-full flex flex-col bg-background/50 rounded-xl border border-border overflow-hidden backdrop-blur-sm shadow-xl">
-            {/* Controls Header */}
-            <div className="flex justify-between items-center gap-2 p-3 border--x border-border bg-surface/50 shrink-0">
+            {/* Controls Header - Mobile Responsive */}
+            <div className="flex flex-col gap-2 p-2 sm:p-3 border-b border-border bg-surface/50 shrink-0">
 
-                {/* Top Row: Musical Controls */}
+                {/* Row 1: Essential Controls - Always visible */}
                 <div className="flex items-center justify-between flex-wrap gap-2">
-                    <div className="flex items-center gap-2 bg-background p-1.5 rounded-lg border border-border bg-zinc-900/50">
-                        <Music size={14} className="text-primary ml-1" />
+                    {/* Scale & Synth */}
+                    <div className="flex items-center gap-1 sm:gap-2 bg-zinc-900/50 p-1 sm:p-1.5 rounded-lg border border-border">
+                        <Music size={14} className="text-primary ml-1 hidden sm:block" />
                         <select
                             value={rootNote}
                             onChange={(e) => setRootNote(e.target.value)}
-                            className="text-xs font-bold bg-transparent border-none outline-none text-foreground w-10 text-center cursor-pointer hover:text-primary transition-colors focus:ring-0"
+                            className="text-xs font-bold bg-transparent border-none outline-none text-foreground w-10 text-center cursor-pointer touch-manipulation"
                             title="Root Note"
                         >
                             {["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"].map(n => (
@@ -178,129 +180,141 @@ export function PianoRoll() {
                         <select
                             value={selectedScale}
                             onChange={(e) => setSelectedScale(e.target.value)}
-                            className="text-xs font-bold bg-transparent border-none outline-none text-foreground w-20 cursor-pointer hover:text-primary transition-colors focus:ring-0"
+                            className="text-xs font-bold bg-transparent border-none outline-none text-foreground w-16 sm:w-20 cursor-pointer touch-manipulation"
                             title="Scale Type"
                         >
                             {Object.keys(SCALES).map(s => (
                                 <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
                             ))}
                         </select>
-                        <div className="w-px h-4 bg-border"></div>
-                        <SynthSelect />
+                        <div className="hidden sm:block w-px h-4 bg-border"></div>
+                        <div className="hidden sm:block">
+                            <SynthSelect />
+                        </div>
                     </div>
 
-                    {/* Tools Palette */}
-                    <div className="flex items-center gap-1 bg-zinc-900/50 p-1.5 rounded-lg border border-border">
+                    {/* Tools Palette - Larger on mobile */}
+                    <div className="flex items-center gap-1 bg-zinc-900/50 p-1 sm:p-1.5 rounded-lg border border-border">
                         <button
                             onClick={() => setTool("pointer")}
-                            className={`p-1 rounded transition-colors ${currentTool === "pointer" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"}`}
-                            title="Pointer Tool (Select/Resize)"
+                            className={`p-2 sm:p-1 rounded transition-colors touch-manipulation ${currentTool === "pointer" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"}`}
+                            title="Pointer"
                         >
-                            <MousePointer2 size={10} />
+                            <MousePointer2 size={16} className="sm:w-[10px] sm:h-[10px]" />
                         </button>
                         <button
                             onClick={() => setTool("pencil")}
-                            className={`p-1 rounded transition-colors ${currentTool === "pencil" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"}`}
-                            title="Pencil Tool (Draw Notes)"
+                            className={`p-2 sm:p-1 rounded transition-colors touch-manipulation ${currentTool === "pencil" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"}`}
+                            title="Pencil"
                         >
-                            <Pencil size={10} />
+                            <Pencil size={16} className="sm:w-[10px] sm:h-[10px]" />
                         </button>
                         <button
                             onClick={() => setTool("eraser")}
-                            className={`p-1 rounded transition-colors ${currentTool === "eraser" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"}`}
-                            title="Eraser Tool"
+                            className={`p-2 sm:p-1 rounded transition-colors touch-manipulation ${currentTool === "eraser" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"}`}
+                            title="Eraser"
                         >
-                            <Eraser size={10} />
+                            <Eraser size={16} className="sm:w-[10px] sm:h-[10px]" />
                         </button>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        {/* Bar Count Control */}
-                        <div className="flex items-center gap-2 bg-background p-1.5 rounded-lg border border-border bg-zinc-900/50">
-                            <ChevronsLeftRight size={14} className="text-primary ml-1" />
-                            <span className="text-[10px] font-bold text-muted-foreground uppercase">Bars</span>
-                            <select
-                                value={project.barCount || 4}
-                                onChange={(e) => setBarCount(Number(e.target.value))}
-                                className="text-xs font-bold bg-transparent border-none outline-none text-foreground w-10 text-center cursor-pointer hover:text-primary transition-colors focus:ring-0"
-                                title="Number of Bars"
-                            >
-                                {[1, 2, 4, 8, 16].map(n => (
-                                    <option key={n} value={n}>{n}</option>
-                                ))}
-                            </select>
-                        </div>
+                    {/* Quick Actions */}
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={() => setShowScaleGuide(!showScaleGuide)}
+                            className={`p-2 sm:p-1.5 rounded touch-manipulation ${showScaleGuide ? "text-primary bg-primary/10" : "text-muted-foreground hover:bg-muted"}`}
+                            title="Scale Guide"
+                        >
+                            <Grid3X3 size={16} className="sm:w-[14px] sm:h-[14px]" />
+                        </button>
+                        <button
+                            onClick={() => setIsFolded(!isFolded)}
+                            className={`p-2 sm:p-1.5 rounded touch-manipulation ${isFolded ? "text-secondary-foreground bg-secondary" : "text-muted-foreground hover:bg-muted"}`}
+                            title="Fold to Scale"
+                        >
+                            <Layers size={16} className="sm:w-[14px] sm:h-[14px]" />
+                        </button>
+                        <button
+                            onClick={clearPianoNotes}
+                            className="p-2 sm:p-1.5 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 touch-manipulation"
+                            title="Clear"
+                        >
+                            <Trash2 size={16} className="sm:w-[14px] sm:h-[14px]" />
+                        </button>
+
+                        {/* Toggle Advanced - Mobile only shows button */}
+                        <button
+                            onClick={() => setShowAdvanced(!showAdvanced)}
+                            className="sm:hidden p-2 rounded text-muted-foreground hover:bg-muted touch-manipulation"
+                        >
+                            <ChevronsLeftRight size={16} className={`transition-transform ${showAdvanced ? 'rotate-90' : ''}`} />
+                        </button>
                     </div>
                 </div>
 
-                {/* Bottom Row: View Customization (Zoom, Range) */}
-                <div className="flex items-center justify-between flex-wrap gap-2 border-t border-border/10">
-                    <div className="flex items-center gap-4">
-                        {/* Vertical Range */}
-                        <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold text-muted-foreground uppercase">Range</span>
-                            <div className="flex items-center gap-1 bg-background rounded border border-border px-1">
-                                <span className="text-[9px] text-muted-foreground">Start:</span>
-                                <input
-                                    type="number"
-                                    min={0} max={8}
-                                    value={startOctave}
-                                    onChange={(e) => setStartOctave(Number(e.target.value))}
-                                    className="w-6 bg-transparent text-xs text-center outline-none"
-                                />
-                            </div>
-                            <div className="flex items-center gap-1 bg-background rounded border border-border px-1">
-                                <span className="text-[9px] text-muted-foreground">Octaves:</span>
-                                <input
-                                    type="number"
-                                    min={1} max={8}
-                                    value={octaveCount}
-                                    onChange={(e) => setOctaveCount(Number(e.target.value))}
-                                    className="w-6 bg-transparent text-xs text-center outline-none"
-                                />
-                            </div>
-                        </div>
+                {/* Row 2: Advanced Controls - Collapsible on mobile */}
+                <div className={`flex items-center justify-between flex-wrap gap-2 ${showAdvanced ? 'flex' : 'hidden'} sm:flex`}>
+                    {/* Bars */}
+                    <div className="flex items-center gap-2 bg-zinc-900/50 p-1.5 rounded-lg border border-border">
+                        <ChevronsLeftRight size={14} className="text-primary" />
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase">Bars</span>
+                        <select
+                            value={project.barCount || 4}
+                            onChange={(e) => setBarCount(Number(e.target.value))}
+                            className="text-xs font-bold bg-transparent text-foreground w-10 text-center cursor-pointer touch-manipulation"
+                        >
+                            {[1, 2, 4, 8, 16].map(n => (
+                                <option key={n} value={n}>{n}</option>
+                            ))}
+                        </select>
+                    </div>
 
-                        {/* Horizontal Zoom */}
-                        <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold text-muted-foreground uppercase">Zoom</span>
+                    {/* Zoom - Hidden on very small screens */}
+                    <div className="hidden xs:flex items-center gap-2 bg-zinc-900/50 p-1.5 rounded-lg border border-border">
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase">Zoom</span>
+                        <input
+                            type="range"
+                            min="0.5" max="3" step="0.1"
+                            value={zoom}
+                            onChange={(e) => setZoom(parseFloat(e.target.value))}
+                            className="w-16 sm:w-20 accent-primary h-2 touch-manipulation"
+                        />
+                    </div>
+
+                    {/* Range - Desktop only */}
+                    <div className="hidden md:flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase">Range</span>
+                        <div className="flex items-center gap-1 bg-zinc-900/50 rounded border border-border px-1.5 py-1">
+                            <span className="text-[9px] text-muted-foreground">Start:</span>
                             <input
-                                type="range"
-                                min="0.5" max="3" step="0.1"
-                                value={zoom}
-                                onChange={(e) => setZoom(parseFloat(e.target.value))}
-                                className="w-20 accent-primary h-1.5 bg-white/50 rounded-full appearance-none cursor-pointer"
-                                title="Horizontal Zoom"
+                                type="number"
+                                min={0} max={8}
+                                value={startOctave}
+                                onChange={(e) => setStartOctave(Number(e.target.value))}
+                                className="w-6 bg-transparent text-xs text-center outline-none"
+                            />
+                        </div>
+                        <div className="flex items-center gap-1 bg-zinc-900/50 rounded border border-border px-1.5 py-1">
+                            <span className="text-[9px] text-muted-foreground">Oct:</span>
+                            <input
+                                type="number"
+                                min={1} max={8}
+                                value={octaveCount}
+                                onChange={(e) => setOctaveCount(Number(e.target.value))}
+                                className="w-6 bg-transparent text-xs text-center outline-none"
                             />
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-1">
-                        <button
-                            onClick={() => setShowScaleGuide(!showScaleGuide)}
-                            className={`p-1.5 rounded hover:bg-muted transition-colors ${showScaleGuide ? "text-primary bg-primary/10" : "text-muted-foreground"}`}
-                            title="Toggle Scale Guide"
-                        >
-                            <Grid3X3 size={14} />
-                        </button>
-                        <button
-                            onClick={() => setIsFolded(!isFolded)}
-                            className={`p-1.5 rounded hover:bg-muted transition-colors ${isFolded ? "text-secondary-foreground bg-secondary" : "text-muted-foreground"}`}
-                            title="Fold Keys to Scale"
-                        >
-                            <Layers size={14} />
-                        </button>
-                        <button
-                            onClick={clearPianoNotes}
-                            className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                            title="Clear All Notes"
-                        >
-                            <Trash2 size={14} />
-                        </button>
-                        <span className="ml-2 text-[10px] font-mono text-muted-foreground border border-border px-1.5 py-0.5 rounded">
-                            {notes.length} notes
-                        </span>
+                    {/* Synth - Mobile only (when advanced is open) */}
+                    <div className="sm:hidden">
+                        <SynthSelect />
                     </div>
+
+                    {/* Note Count */}
+                    <span className="text-[10px] font-mono text-muted-foreground bg-zinc-900/50 border border-border px-2 py-1 rounded">
+                        {notes.length} notes
+                    </span>
                 </div>
             </div>
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useStore, LoopTrack } from "@/lib/store";
 import { Mic, Play, Square, Trash2, Volume2, VolumeX, Repeat, X, Download } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -30,9 +30,9 @@ export function LooperPanel() {
                         animate={{ width: "auto", opacity: 1 }}
                         exit={{ width: 0, opacity: 0 }}
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                        className="h-full border-l border-border bg-background/95 backdrop-blur-xl shadow-2xl z-40 bg-background flex flex-col overflow-hidden max-w-[90vw] md:max-w-md"
+                        className="h-full border-l border-border bg-background/95 backdrop-blur-xl shadow-2xl z-40 bg-background flex flex-col overflow-hidden w-full sm:w-auto sm:max-w-md"
                     >
-                        <div className="w-[320px] md:w-80 h-full flex flex-col p-4">
+                        <div className="w-screen sm:w-80 h-full flex flex-col p-4">
                             <div className="flex items-center justify-between mb-6 mt-4">
                                 <h2 className="text-xl font-bold flex items-center gap-2">
                                     <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
@@ -74,6 +74,29 @@ function LoopTrackCard({
     onVolume: (v: number) => void, onMute: () => void
 }) {
     const [showVolume, setShowVolume] = useState(false);
+    const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+    const isLongPress = useRef(false);
+
+    const handleTouchStart = () => {
+        isLongPress.current = false;
+        longPressTimer.current = setTimeout(() => {
+            isLongPress.current = true;
+            setShowVolume(!showVolume);
+        }, 400); // 400ms long press
+    };
+
+    const handleTouchEnd = () => {
+        if (longPressTimer.current) {
+            clearTimeout(longPressTimer.current);
+        }
+    };
+
+    const handleClick = () => {
+        // Only trigger mute if it wasn't a long press
+        if (!isLongPress.current) {
+            onMute();
+        }
+    };
     const isRecording = track.state === "recording";
     const isPlaying = track.state === "playing";
     const hasLoop = track.state !== "empty" && track.state !== "recording";
@@ -137,10 +160,13 @@ function LoopTrackCard({
 
                     {/* Volume Button */}
                     <button
-                        onClick={onMute}
+                        onClick={handleClick}
                         onContextMenu={(e) => { e.preventDefault(); setShowVolume(!showVolume); }}
-                        className={`w-8 h-8 rounded-full border border-border flex items-center justify-center transition-all ${track.muted ? "bg-destructive/20 text-destructive border-destructive/50" : "bg-background hover:bg-muted text-muted-foreground"}`}
-                        title="Left-Click: Mute | Right-Click: Volume"
+                        onTouchStart={handleTouchStart}
+                        onTouchEnd={handleTouchEnd}
+                        onTouchCancel={handleTouchEnd}
+                        className={`w-8 h-8 rounded-full border border-border flex items-center justify-center transition-all touch-manipulation ${track.muted ? "bg-destructive/20 text-destructive border-destructive/50" : "bg-background hover:bg-muted text-muted-foreground"}`}
+                        title="Tap: Mute | Hold/Right-Click: Volume"
                     >
                         {track.muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
                     </button>
