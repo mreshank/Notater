@@ -1,5 +1,5 @@
 {
-    "name": "notater",
+    "name": "@notater/core",
     "version": "0.1.1",
     "description": "Core music logic for Notater ecosystem",
     "main": "dist/index.js",
@@ -9,6 +9,7 @@
         "build": "tsup src/index.ts --format cjs,esm --dts",
         "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
         "test": "vitest run",
+        "typecheck": "tsc --noEmit",
         "prepublishOnly": "pnpm build",
         "release": "pnpm build && pnpm publish --access public"
     },

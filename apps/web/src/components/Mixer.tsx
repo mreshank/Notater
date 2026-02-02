@@ -64,6 +64,7 @@ const Knob = ({ label, value, min, max, step, onChange, unit, disabled }: KnobPr
             onChange={(e) => onChange(parseFloat(e.target.value))}
             className="w-full h-1.5 bg-muted rounded-full cursor-pointer accent-primary"
             disabled={disabled}
+            aria-label={label}
         />
     </div>
 );
@@ -183,6 +184,7 @@ export function Mixer() {
                                                 value={[masterEq.low]}
                                                 onValueChange={([val]: number[]) => setMasterEQ("low", val)}
                                                 className="h-full py-2"
+                                                aria-label="Master EQ Low"
                                             />
                                         </div>
                                         <span className="text-[10px] font-mono text-muted-foreground">LOW</span>
@@ -198,6 +200,7 @@ export function Mixer() {
                                                 value={[masterEq.mid]}
                                                 onValueChange={([val]: number[]) => setMasterEQ("mid", val)}
                                                 className="h-full py-2"
+                                                aria-label="Master EQ Mid"
                                             />
                                         </div>
                                         <span className="text-[10px] font-mono text-muted-foreground">MID</span>
@@ -213,6 +216,7 @@ export function Mixer() {
                                                 value={[masterEq.high]}
                                                 onValueChange={([val]: number[]) => setMasterEQ("high", val)}
                                                 className="h-full py-2"
+                                                aria-label="Master EQ High"
                                             />
                                         </div>
                                         <span className="text-[10px] font-mono text-muted-foreground">HIGH</span>
@@ -230,6 +234,7 @@ export function Mixer() {
                                     value={masterEffects.filterFreq}
                                     onChange={(e) => setMasterEffect("filterFreq", parseFloat(e.target.value))}
                                     className="w-full h-1.5 bg-muted rounded-full cursor-pointer accent-orange-500"
+                                    aria-label="Master Filter Cutoff"
                                 />
                             </div>
                         </div>
@@ -310,6 +315,7 @@ function ChannelStrip({
                         onClick={onImport}
                         className="text-[8px] opacity-70 hover:opacity-100 hover:text-primary flex items-center gap-1 transition-all"
                         title="Import Sample"
+                        aria-label={`Import Sample for ${channel.name}`}
                     >
                         <FolderOpen size={12} />
                     </button>
@@ -324,7 +330,8 @@ function ChannelStrip({
                             style={{ transform: `rotate(${(channel.sends.reverb * 270) - 135}deg)` }}></div>
                         <input type="range" min="0" max="1" step="0.1" value={channel.sends.reverb}
                             onChange={(e) => setSend("reverb", parseFloat(e.target.value))}
-                            className="absolute inset-0 opacity-0 cursor-pointer" title="Reverb Send" />
+                            className="absolute inset-0 opacity-0 cursor-pointer" title="Reverb Send"
+                            aria-label={`Reverb Send for ${channel.name}`} />
                     </div>
                     <span className="text-[7px] font-mono text-muted-foreground mt-0.5">REV</span>
                 </div>
@@ -334,7 +341,8 @@ function ChannelStrip({
                             style={{ transform: `rotate(${(channel.sends.delay * 270) - 135}deg)` }}></div>
                         <input type="range" min="0" max="1" step="0.1" value={channel.sends.delay}
                             onChange={(e) => setSend("delay", parseFloat(e.target.value))}
-                            className="absolute inset-0 opacity-0 cursor-pointer" title="Delay Send" />
+                            className="absolute inset-0 opacity-0 cursor-pointer" title="Delay Send"
+                            aria-label={`Delay Send for ${channel.name}`} />
                     </div>
                     <span className="text-[7px] font-mono text-muted-foreground mt-0.5">DLY</span>
                 </div>
@@ -377,6 +385,7 @@ function ChannelStrip({
                                 onChange={(e) => setEQ("low", parseFloat(e.target.value))}
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-ns-resize"
                                 title={`Low: ${channel.eq.low}dB`}
+                                aria-label={`EQ Low for ${channel.name}`}
                             />
                         </div>
                         <span className="text-[7px] font-mono text-muted-foreground">LO</span>
@@ -395,6 +404,7 @@ function ChannelStrip({
                                 onChange={(e) => setEQ("mid", parseFloat(e.target.value))}
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-ns-resize"
                                 title={`Mid: ${channel.eq.mid}dB`}
+                                aria-label={`EQ Mid for ${channel.name}`}
                             />
                         </div>
                         <span className="text-[7px] font-mono text-muted-foreground">MID</span>
@@ -413,6 +423,7 @@ function ChannelStrip({
                                 onChange={(e) => setEQ("high", parseFloat(e.target.value))}
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-ns-resize"
                                 title={`High: ${channel.eq.high}dB`}
+                                aria-label={`EQ High for ${channel.name}`}
                             />
                         </div>
                         <span className="text-[7px] font-mono text-muted-foreground">HI</span>
@@ -483,6 +494,7 @@ function ChannelStrip({
             {/* Mute/Solo */}
             <div className="flex gap-2 w-full mt-2">
                 <button
+                    type="button"
                     onClick={toggleMute}
                     className={cn(
                         "flex-1 py-1.5 text-[10px] font-bold rounded border transition-colors hover:scale-105 active:scale-95",
@@ -490,10 +502,13 @@ function ChannelStrip({
                             ? "bg-destructive text-destructive-foreground border-destructive"
                             : "bg-muted/50 hover:bg-white/50 text-muted-foreground border-transparent"
                     )}
+                    aria-label={`Mute ${channel.name}`}
+                    aria-pressed={channel.muted}
                 >
                     M
                 </button>
                 <button
+                    type="button"
                     onClick={toggleSolo}
                     className={cn(
                         "flex-1 py-1.5 text-[10px] font-bold rounded border transition-colors hover:scale-105 active:scale-95",
@@ -501,6 +516,8 @@ function ChannelStrip({
                             ? "bg-yellow-500 text-yellow-950 border-yellow-500"
                             : "bg-muted/50 hover:bg-white/50 text-muted-foreground border-transparent"
                     )}
+                    aria-label={`Solo ${channel.name}`}
+                    aria-pressed={channel.solo}
                 >
                     S
                 </button>

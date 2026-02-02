@@ -6,7 +6,7 @@
     "dev": "next dev --port 6951",
     "build": "npx prisma generate && next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "eslint src",
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",

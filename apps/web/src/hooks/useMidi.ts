@@ -33,7 +33,11 @@ export function useMidi() {
     useEffect(() => {
         if (!navigator.requestMIDIAccess) return;
 
-        const handleMidiMessage = (event: any) => {
+        const handleMidiMessage = (e: Event) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const event = e as any; // Cast to any because WebMIDI types are not standard in this env
+            if (!event.data) return;
+
             const [command, note, velocity] = event.data;
             
             // Note On
@@ -56,9 +60,11 @@ export function useMidi() {
                 input.onmidimessage = handleMidiMessage;
             }
 
-            access.onstatechange = (e: any) => {
+            access.onstatechange = (e: Event) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const event = e as any;
                 // creating/removing connections
-                 console.log(e.port.name, e.port.state, e.port.connection);
+                 console.log(event.port.name, event.port.state, event.port.connection);
             };
         });
 

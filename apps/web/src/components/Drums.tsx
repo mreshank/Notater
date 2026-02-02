@@ -232,6 +232,7 @@ export function Drums() {
                                 onClick={() => handleKitChange(kit.id)}
                                 className={`px-2 py-0.5 text-[9px] font-bold rounded-full transition-all ${currentKit === kit.id ? "bg-primary text-primary-foreground" : "opacity-60 hover:opacity-100"
                                     }`}
+                                aria-label={`Select ${kit.name} Kit`}
                             >
                                 {kit.name}
                             </button>
@@ -251,6 +252,7 @@ export function Drums() {
                             onClick={() => setMode(m.id)}
                             className={`px-3 py-1 rounded-full font-bold transition-all ${mode === m.id ? "bg-primary text-primary-foreground" : "opacity-60 hover:opacity-100"
                                 }`}
+                            aria-label={`Switch to ${m.label} Mode`}
                         >
                             {m.label}
                         </button>
@@ -316,6 +318,7 @@ export function Drums() {
                                         onClick={() => handleHit(type)}
                                         animate={{ scale: isHit ? 1.2 : 1 }}
                                         transition={{ duration: 0.08 }}
+                                        aria-label={`Play ${DRUM_INFO[type].label}`}
                                         className="absolute rounded-full flex flex-col items-center justify-center font-bold text-white cursor-pointer border-2 border-white/20"
                                         style={{
                                             left: `${pos.x}%`,
@@ -355,6 +358,7 @@ export function Drums() {
                                 onChange={(e) => setPatternName(e.target.value)}
                                 placeholder="New pattern..."
                                 className="text-[10px] bg-surface border border-border rounded px-2 py-1 w-24 focus:outline-none focus:border-primary"
+                                aria-label="Pattern Name"
                             />
                             <button
                                 onClick={savePattern}
@@ -377,6 +381,7 @@ export function Drums() {
                                 disabled={isGenerating}
                                 className="px-2 py-1.5 text-[10px] font-bold bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 flex items-center gap-1 transition-colors shadow-sm"
                                 title="Generate with AI"
+                                aria-label="Generate with AI"
                             >
                                 {isGenerating ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
                                 {/* Magic AI */}
@@ -426,6 +431,7 @@ export function Drums() {
                                                                 outline: isPlayhead ? '2px solid var(--accent)' : 'none',
                                                                 outlineOffset: '-1px',
                                                             }}
+                                                            aria-label={`Toggle ${DRUM_INFO[drum].label} step ${step + 1}`}
                                                         />
                                                     </td>
                                                 );

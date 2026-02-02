@@ -165,7 +165,7 @@ export async function exportProjectToWav(state: ExportState): Promise<Blob> {
         drumIds.forEach(id => {
              // Recreate the specific synth type logic from store/initAudio roughly
              // For simplicity, we'll just check ID. Real app should have better factory.
-             let inst: any;
+             let inst: Tone.MembraneSynth | Tone.NoiseSynth;
              if (id === 'hihat') {
                  inst = createNoiseSynth();
              } else {

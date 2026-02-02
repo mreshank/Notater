@@ -1,7 +1,7 @@
 "use client";
 import React, { createContext, useContext, useState, ReactNode, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
+// import { X } from "lucide-react";
 
 type ModalType = "alert" | "confirm" | "prompt";
 
@@ -34,6 +34,7 @@ export const useModal = () => {
 
 export const ModalProvider = ({ children }: { children: ReactNode }) => {
     const [modal, setModal] = useState<(ModalOptions & { type: ModalType }) | null>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const resolveRef = useRef<((value: any) => void) | null>(null);
 
     const close = () => {
@@ -43,21 +44,24 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
 
     const alert = (message: string, options?: Omit<ModalOptions, "message">) => {
         return new Promise<void>((resolve) => {
-            resolveRef.current = () => resolve();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            resolveRef.current = (val: any) => resolve(val);
             setModal({ type: "alert", message, ...options });
         });
     };
 
     const confirm = (message: string, options?: Omit<ModalOptions, "message">) => {
         return new Promise<boolean>((resolve) => {
-            resolveRef.current = (val: boolean) => resolve(val);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            resolveRef.current = (val: any) => resolve(val);
             setModal({ type: "confirm", message, ...options });
         });
     };
 
     const prompt = (message: string, options?: Omit<ModalOptions, "message"> & { defaultValue?: string }) => {
         return new Promise<string | null>((resolve) => {
-            resolveRef.current = (val: string | null) => resolve(val);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            resolveRef.current = (val: any) => resolve(val);
             setModal({ type: "prompt", message, ...options });
         });
     };
@@ -128,7 +132,7 @@ const ModalDialog = ({
 
     return (
         <div
-            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-background/50 backdrop-blur-sm"
+            className="fixed inset-0 z-200 flex items-center justify-center p-4 bg-background/50 backdrop-blur-sm"
             onClick={handleOverlayClick}
         >
             <motion.div
@@ -157,6 +161,8 @@ const ModalDialog = ({
                                 if (e.key === "Escape") onCancel();
                             }}
                             className="w-full px-3 py-2 text-sm bg-background border border-border rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                            placeholder="Enter value..."
+                            aria-label="Prompt Input"
                         />
                     )}
 

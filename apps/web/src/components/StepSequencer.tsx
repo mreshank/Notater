@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useStore } from "@/lib/store";
 import { motion } from "framer-motion";
-import { Plus, Trash2, Shuffle, Eraser, Sparkles } from "lucide-react";
+import { Trash2, Shuffle, Eraser, Sparkles } from "lucide-react";
 
 const ROWS = [
     { id: "kick", label: "KICK", color: "#ec4899" },

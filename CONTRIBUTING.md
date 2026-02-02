@@ -35,7 +35,7 @@ Notater is a monorepo managed by `pnpm`.
     ```
 
 4.  **Open in browser**
-    Navigate to `http://localhost:3000`.
+    Navigate to `http://localhost:6951`.
 
 ## 🌳 Project Structure
 

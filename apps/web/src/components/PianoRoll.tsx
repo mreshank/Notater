@@ -175,6 +175,7 @@ export function PianoRoll() {
                             onChange={(e) => setRootNote(e.target.value)}
                             className="text-xs font-bold bg-transparent border-none outline-none text-foreground w-10 text-center cursor-pointer touch-manipulation"
                             title="Root Note"
+                            aria-label="Root Note"
                         >
                             {["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"].map(n => (
                                 <option key={n} value={n}>{n}</option>
@@ -186,6 +187,7 @@ export function PianoRoll() {
                             onChange={(e) => setSelectedScale(e.target.value)}
                             className="text-xs font-bold bg-transparent border-none outline-none text-foreground w-16 sm:w-20 cursor-pointer touch-manipulation"
                             title="Scale Type"
+                            aria-label="Scale Type"
                         >
                             {Object.keys(SCALES).map(s => (
                                 <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
@@ -200,23 +202,32 @@ export function PianoRoll() {
                     {/* Tools Palette - Larger on mobile */}
                     <div className="flex items-center gap-1 bg-zinc-900/50 p-1 sm:p-1.5 rounded-lg border border-border">
                         <button
+                            type="button"
                             onClick={() => setTool("pointer")}
                             className={`p-2 sm:p-1 rounded transition-colors touch-manipulation ${currentTool === "pointer" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"}`}
                             title="Pointer"
+                            aria-label="Pointer Tool"
+                            aria-pressed={currentTool === "pointer"}
                         >
                             <MousePointer2 size={16} className="sm:w-[10px] sm:h-[10px]" />
                         </button>
                         <button
+                            type="button"
                             onClick={() => setTool("pencil")}
                             className={`p-2 sm:p-1 rounded transition-colors touch-manipulation ${currentTool === "pencil" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"}`}
                             title="Pencil"
+                            aria-label="Pencil Tool"
+                            aria-pressed={currentTool === "pencil"}
                         >
                             <Pencil size={16} className="sm:w-[10px] sm:h-[10px]" />
                         </button>
                         <button
+                            type="button"
                             onClick={() => setTool("eraser")}
                             className={`p-2 sm:p-1 rounded transition-colors touch-manipulation ${currentTool === "eraser" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"}`}
                             title="Eraser"
+                            aria-label="Eraser Tool"
+                            aria-pressed={currentTool === "eraser"}
                         >
                             <Eraser size={16} className="sm:w-[10px] sm:h-[10px]" />
                         </button>
@@ -230,6 +241,7 @@ export function PianoRoll() {
                             value={project.barCount || 4}
                             onChange={(e) => setBarCount(Number(e.target.value))}
                             className="text-xs font-bold bg-transparent text-foreground w-10 text-center cursor-pointer touch-manipulation"
+                            aria-label="Bar Count"
                         >
                             {[1, 2, 4, 8, 16].map(n => (
                                 <option key={n} value={n}>{n}</option>
@@ -240,31 +252,42 @@ export function PianoRoll() {
                     {/* Quick Actions */}
                     <div className="flex items-center gap-1">
                         <button
+                            type="button"
                             onClick={() => setShowScaleGuide(!showScaleGuide)}
                             className={`p-2 sm:p-1.5 rounded touch-manipulation ${showScaleGuide ? "text-primary bg-primary/10" : "text-muted-foreground hover:bg-muted"}`}
                             title="Scale Guide"
+                            aria-label="Toggle Scale Guide"
+                            aria-pressed={showScaleGuide}
                         >
                             <Grid3X3 size={16} className="sm:w-[14px] sm:h-[14px]" />
                         </button>
                         <button
+                            type="button"
                             onClick={() => setIsFolded(!isFolded)}
                             className={`p-2 sm:p-1.5 rounded touch-manipulation ${isFolded ? "text-secondary-foreground bg-secondary" : "text-muted-foreground hover:bg-muted"}`}
                             title="Fold to Scale"
+                            aria-label="Toggle Scale Fold"
+                            aria-pressed={isFolded}
                         >
                             <Layers size={16} className="sm:w-[14px] sm:h-[14px]" />
                         </button>
                         <button
+                            type="button"
                             onClick={clearPianoNotes}
                             className="p-2 sm:p-1.5 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 touch-manipulation"
                             title="Clear"
+                            aria-label="Clear all notes"
                         >
                             <Trash2 size={16} className="sm:w-[14px] sm:h-[14px]" />
                         </button>
 
                         {/* Toggle Advanced - Mobile only shows button */}
                         <button
+                            type="button"
                             onClick={() => setShowAdvanced(!showAdvanced)}
                             className="sm:hidden p-2 rounded text-muted-foreground hover:bg-muted touch-manipulation"
+                            aria-label="Toggle Advanced Controls"
+                            aria-pressed={showAdvanced}
                         >
                             <ChevronsLeftRight size={16} className={`transition-transform ${showAdvanced ? 'rotate-90' : ''}`} />
                         </button>
@@ -284,6 +307,7 @@ export function PianoRoll() {
                             value={zoom}
                             onChange={(e) => setZoom(parseFloat(e.target.value))}
                             className="w-16 sm:w-20 accent-primary h-2 touch-manipulation"
+                            aria-label="Zoom Level"
                         />
                     </div>
 
@@ -298,6 +322,7 @@ export function PianoRoll() {
                                 value={startOctave}
                                 onChange={(e) => setStartOctave(Number(e.target.value))}
                                 className="w-6 bg-transparent text-xs text-center outline-none"
+                                aria-label="Start Octave"
                             />
                         </div>
                         <div className="flex items-center gap-1 bg-zinc-900/50 rounded border border-border px-1.5 py-1">
@@ -308,6 +333,7 @@ export function PianoRoll() {
                                 value={octaveCount}
                                 onChange={(e) => setOctaveCount(Number(e.target.value))}
                                 className="w-6 bg-transparent text-xs text-center outline-none"
+                                aria-label="Octave Count"
                             />
                         </div>
                     </div>

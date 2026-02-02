@@ -3,7 +3,7 @@
  */
 "use client";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db, getAllProjects, type StoredProject } from "./db";
+import { db, getAllProjects } from "./db";
 
 /**
  * Hook to get all projects (reactive)

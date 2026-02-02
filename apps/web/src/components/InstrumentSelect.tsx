@@ -46,9 +46,13 @@ export function InstrumentSelect() {
     return (
         <div className="relative z-50">
             <button
+                type="button"
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex items-center gap-2 bg-surface hover:bg-surface-hover/50 rounded transition-colors pr-2"
                 title="Select Instrument"
+                aria-label="Select Instrument"
+                aria-haspopup="true"
+                aria-expanded={isOpen}
             >
                 <div className={`p-1 rounded ${isSynth ? 'bg-indigo-500/10 text-indigo-400' : 'bg-orange-500/10 text-orange-400'}`}>
                     {isSynth ? <Piano size={14} /> : <Drum size={14} />}
@@ -76,6 +80,7 @@ export function InstrumentSelect() {
                             {/* Instrument Type Switch */}
                             <div className="flex p-1 bg-zinc-900 rounded-lg">
                                 <button
+                                    type="button"
                                     onClick={() => setPianoRollInstrument("synth")}
                                     className={`flex-1 flex items-center justify-center gap-2 py-1.5 rounded-md text-[10px] font-bold uppercase transition-all ${isSynth ? "bg-indigo-600 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"
                                         }`}
@@ -83,6 +88,7 @@ export function InstrumentSelect() {
                                     <Piano size={12} /> Synth
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={() => setPianoRollInstrument("drums")}
                                     className={`flex-1 flex items-center justify-center gap-2 py-1.5 rounded-md text-[10px] font-bold uppercase transition-all ${!isSynth ? "bg-orange-600 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"
                                         }`}
@@ -102,6 +108,7 @@ export function InstrumentSelect() {
                                 {isSynth ? (
                                     SYNTH_PRESETS.map((preset) => (
                                         <button
+                                            type="button"
                                             key={preset.id}
                                             onClick={() => {
                                                 setSynthPreset(preset.id);
@@ -122,6 +129,7 @@ export function InstrumentSelect() {
                                 ) : (
                                     DRUM_KITS.map((kit) => (
                                         <button
+                                            type="button"
                                             key={kit.id}
                                             onClick={() => {
                                                 setActiveDrumKit(kit.id);

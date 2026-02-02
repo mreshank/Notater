@@ -80,6 +80,7 @@ export function applyPreset(synth: Tone.PolySynth, preset: SynthPreset) {
     case "fat":
       // Explicit cast to satisfy Tone types for special oscillators
       synth.set({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         oscillator: { type: "fatsawtooth" as any, count: 3, spread: 20 },
         envelope: { attack: 0.02, decay: 0.1, sustain: 0.7, release: 0.5 },
       });

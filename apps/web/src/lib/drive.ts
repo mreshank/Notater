@@ -1,4 +1,5 @@
-import { StoredProject } from "./db";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { StoredProject } from "./db";
 import { exportProjectPackage } from "./sync";
 
 // Global types for Google API

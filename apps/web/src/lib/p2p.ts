@@ -163,8 +163,11 @@ class P2PManager {
                 break;
             case "SEQUENCER_UPDATE":
                 // Use explicit value if provided
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                store.toggleSequencerStep(msg.rowId, msg.step, (msg as any).value);
+                if (msg.value !== undefined) {
+                     store.toggleSequencerStep(msg.rowId, msg.step, msg.value);
+                } else {
+                     store.toggleSequencerStep(msg.rowId, msg.step);
+                }
                 break;
             case "MIXER_UPDATE":
                 if (msg.field === 'volume') store.setTrackVolume(msg.trackId, msg.value as number);
@@ -185,8 +188,9 @@ class P2PManager {
                 break;
             case "MASTER_FX_UPDATE":
                 if (msg.effect === 'eq' && msg.param) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    store.setMasterEQ(msg.param as any, msg.value as number);
+                    // Start of MasterEQ key check
+                    const eqParam = msg.param as "low" | "mid" | "high";
+                    store.setMasterEQ(eqParam, msg.value as number);
                 } else if (msg.field) {
                     store.setMasterEffect(msg.field, msg.value as number);
                 }

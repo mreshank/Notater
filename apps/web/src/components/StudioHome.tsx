@@ -203,7 +203,7 @@ export function StudioHome({ onNavigate }: StudioHomeProps) {
                                         if (aiSuggestion.pianoNotes) {
                                             // Clear existing notes first ?? Maybe optional. Let's append or clear.
                                             // store.clearPianoNotes(); // If we want to replace
-                                            aiSuggestion.pianoNotes.forEach((n: any) => {
+                                            aiSuggestion.pianoNotes.forEach((n) => {
                                                 store.addPianoNote({
                                                     id: Math.random().toString(36).substr(2, 9),
                                                     pitch: n.pitch,

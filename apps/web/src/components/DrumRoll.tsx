@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useStore } from "@/lib/store";
 import { playDrum, DrumType, DRUM_TYPES } from "@/lib/audio/drums";
-import { useToast } from "./ui/ToastProvider";
+// import { useToast } from "./ui/ToastProvider";
 
 // Simple drum labels
 const DRUM_INFO: Record<DrumType, { label: string; colorClass: string; shadowClass: string }> = {
@@ -40,7 +40,7 @@ export function DrumRoll() {
     const [currentPattern, setCurrentPattern] = useState<string | null>(null);
     const [patternName, setPatternName] = useState("");
     const lastPlayedStep = useRef<number>(-1);
-    const { success, error } = useToast();
+    // const { success, error } = useToast();
 
     // Toggle step
     const toggleStep = (drum: DrumType, step: number) => {

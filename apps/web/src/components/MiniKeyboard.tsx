@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useStore, SynthParams } from "@/lib/store";
 import { motion } from "framer-motion";
 import {
-    Upload, Download, ChevronLeft, ChevronRight, Zap, Sliders, AudioWaveform
+    ChevronLeft, ChevronRight, Zap, Sliders, AudioWaveform
 } from "lucide-react";
 
 // Helpers
@@ -34,6 +34,7 @@ const Slider = ({
                 value={value}
                 onChange={(e) => onChange(parseFloat(e.target.value))}
                 className={horizontal ? "[-webkit-appearance:slider-horizontal] w-full h-full opacity-50 group-hover:opacity-100 transition-opacity cursor-pointer accent-primary" : "[-webkit-appearance:slider-vertical] w-full h-full opacity-50 group-hover:opacity-100 transition-opacity cursor-pointer accent-primary"}
+                aria-label={label}
             />
         </div>
         <div className="text-center">
@@ -46,13 +47,11 @@ const Slider = ({
 export function MiniKeyboard() {
     const {
         playNote, isAudioInitialized, initializeAudio,
-        synthParams, setSynthParam, isRecording, toggleRecord,
-        exportAudio, saveProject
+        synthParams, setSynthParam
     } = useStore();
 
     const [octave, setOctave] = useState(4);
     const [range, setRange] = useState(2); // octaves to show
-    const [startKey, setStartKey] = useState("C");
     const [activeNotes, setActiveNotes] = useState<Set<string>>(new Set());
 
     // Initialize audio on first interaction
@@ -111,6 +110,7 @@ export function MiniKeyboard() {
                     <div className="grid grid-cols-3 gap-2">
                         {OSCILLATORS.map((osc) => (
                             <button
+                                type="button"
                                 key={osc.type}
                                 onClick={() => setSynthParam("oscillatorType", osc.type)}
                                 className={`p-2 rounded-md text-[10px] font-bold border transition-all ${synthParams.oscillatorType === osc.type
@@ -129,6 +129,7 @@ export function MiniKeyboard() {
                             value={synthParams.detune}
                             onChange={(e) => setSynthParam("detune", parseFloat(e.target.value))}
                             className="w-full accent-primary"
+                            aria-label="Detune"
                         />
                     </div>
                 </div>
@@ -167,16 +168,16 @@ export function MiniKeyboard() {
             {/* Keyboard Controls */}
             <div className="flex items-center justify-between px-2">
                 <div className="flex items-center gap-2 bg-muted/30 p-1 rounded-lg">
-                    <button onClick={() => setOctave(o => Math.max(0, o - 1))} className="w-8 h-8 flex items-center justify-center hover:bg-background rounded transition-colors"><ChevronLeft size={16} /></button>
+                    <button type="button" onClick={() => setOctave(o => Math.max(0, o - 1))} className="w-8 h-8 flex items-center justify-center hover:bg-background rounded transition-colors" aria-label="Octave Down"><ChevronLeft size={16} /></button>
                     <span className="text-xs font-mono font-bold w-16 text-center">OCT {octave}</span>
-                    <button onClick={() => setOctave(o => Math.min(8, o + 1))} className="w-8 h-8 flex items-center justify-center hover:bg-background rounded transition-colors"><ChevronRight size={16} /></button>
+                    <button type="button" onClick={() => setOctave(o => Math.min(8, o + 1))} className="w-8 h-8 flex items-center justify-center hover:bg-background rounded transition-colors" aria-label="Octave Up"><ChevronRight size={16} /></button>
                 </div>
 
                 <div className="flex items-center gap-2 bg-muted/30 p-1 rounded-lg">
                     <span className="text-[10px] font-bold px-2 text-muted-foreground">RANGE</span>
-                    <button onClick={() => setRange(r => Math.max(1, r - 1))} className="w-8 h-8 flex items-center justify-center hover:bg-background rounded transition-colors">-</button>
+                    <button type="button" onClick={() => setRange(r => Math.max(1, r - 1))} className="w-8 h-8 flex items-center justify-center hover:bg-background rounded transition-colors">-</button>
                     <span className="text-xs font-mono font-bold w-8 text-center">{range}</span>
-                    <button onClick={() => setRange(r => Math.min(4, r + 1))} className="w-8 h-8 flex items-center justify-center hover:bg-background rounded transition-colors">+</button>
+                    <button type="button" onClick={() => setRange(r => Math.min(4, r + 1))} className="w-8 h-8 flex items-center justify-center hover:bg-background rounded transition-colors">+</button>
                 </div>
             </div>
 
@@ -186,6 +187,7 @@ export function MiniKeyboard() {
                 <div className="absolute inset-0 flex">
                     {whiteKeys.map((key) => (
                         <motion.button
+                            type="button"
                             key={key.note}
                             onPointerDown={() => handleNoteOn(key.note)}
                             onPointerUp={() => handleNoteOff(key.note)}
@@ -216,12 +218,14 @@ export function MiniKeyboard() {
 
                             return (
                                 <motion.button
+                                    type="button"
                                     key={key.note}
                                     onPointerDown={(e) => { e.stopPropagation(); handleNoteOn(key.note); }}
                                     onPointerUp={() => handleNoteOff(key.note)}
                                     onPointerLeave={() => handleNoteOff(key.note)}
                                     className={`absolute h-[60%] bg-black border border-gray-700/50 rounded-b-md shadow-lg pointer-events-auto transition-colors ${activeNotes.has(key.note) ? "bg-primary border-primary shadow-primary/50" : "hover:bg-gray-900"
                                         }`}
+                                    aria-label={key.note}
                                     style={{
                                         left: `${leftPosition}%`,
                                         width: `${blackKeyWidth}%`

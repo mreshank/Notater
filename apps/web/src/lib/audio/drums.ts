@@ -164,7 +164,7 @@ export function playDrum(type: DrumType) {
     // We Map drum types to channel IDs. Default to specific name, or 'drums' bus if we had one.
     // Our store uses 'kick', 'snare', 'hihat', 'clap'. Others might need a generic 'percussion' channel or own channel.
     // For now detailed mapping:
-    let channelId = type; 
+    const channelId = type; 
     // If we only have 4 channels in sequencer, maybe map tom => kick? No, let's look for exact match.
     // If no channel found, maybe fallback to 'drums' or Master.
     

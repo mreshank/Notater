@@ -189,6 +189,7 @@ export function ProjectControl() {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsOpen(!isOpen)}
                 title="Project Menu"
+                aria-label="Project Menu"
                 className={`p-2 rounded-lg md:border border-border transition-colors ${isOpen ? "bg-primary text-primary-foreground" : "md:bg-surface hover:bg-surface-hover"}`}
             >
                 <Menu size={16} />

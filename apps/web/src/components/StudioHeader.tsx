@@ -37,7 +37,7 @@ export function StudioHeader() {
                             <input
                                 type="text"
                                 value={project.name}
-                                onChange={(e) => useStore.setState(s => ({ project: { ...s.project, name: e.target.value } }))}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => useStore.setState(s => ({ project: { ...s.project, name: e.target.value } }))}
                                 className="bg-transparent font-bold text-sm outline-none w-40 focus:w-56 transition-all text-foreground placeholder:text-muted-foreground/50 truncate"
                                 placeholder="Untitled Project"
                             />
@@ -50,16 +50,19 @@ export function StudioHeader() {
                     {/* Desktop Actions - Hidden on mobile */}
                     <div className="hidden sm:block h-6 w-px bg-border/50"></div>
                     <div className="hidden sm:flex items-center gap-1">
-                        <button onClick={saveProject} disabled={isLoading} className="p-2 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50" title="Save Project (To DB)">
+                        <button type="button" onClick={saveProject} disabled={isLoading} className="p-2 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50" title="Save Project (To DB)" aria-label="Save Project">
                             {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                         </button>
-                        <button onClick={exportAudio} className="p-2 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors" title="Export Audio (WAV)">
+                        <button type="button" onClick={exportAudio} className="p-2 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors" title="Export Audio (WAV)" aria-label="Export Audio">
                             <Download size={16} />
                         </button>
                         <button
+                            type="button"
                             onClick={() => setShowNotes(!showNotes)}
                             className={`p-2 rounded-md transition-colors ${showNotes ? "bg-primary/20 text-primary" : "hover:bg-muted text-muted-foreground"}`}
                             title="Project Notes"
+                            aria-label="Toggle Project Notes"
+                            aria-pressed={showNotes}
                         >
                             <FileText size={16} />
                         </button>
@@ -85,29 +88,38 @@ export function StudioHeader() {
 
                         {/* Record Button */}
                         <button
+                            type="button"
                             onClick={toggleRecord}
                             className={`w-9 h-9 sm:w-8 sm:h-8 z-10 flex items-center justify-center rounded-full transition-all ${isRecording ? "bg-destructive text-white shadow-lg shadow-destructive/40 animate-pulse" : "hover:bg-destructive/10 text-destructive"
                                 }`}
                             title="Record"
+                            aria-label="Toggle Record"
+                            aria-pressed={isRecording}
                         >
                             <Circle size={16} className="sm:w-[14px] sm:h-[14px]" fill={isRecording ? "currentColor" : "none"} />
                         </button>
 
                         {/* Play Button */}
                         <button
+                            type="button"
                             onClick={togglePlay}
                             className={`w-11 h-11 sm:w-10 sm:h-10 z-10 flex items-center justify-center rounded-full bg-primary text-primary-foreground hover:opacity-90 transition-all ${isPlaying ? "shadow-lg shadow-primary/40 scale-105" : ""
                                 }`}
                             title={isPlaying ? "Pause" : "Play"}
+                            aria-label={isPlaying ? "Pause" : "Play"}
+                            aria-pressed={isPlaying}
                         >
                             {isPlaying ? <Pause size={22} className="sm:w-5 sm:h-5" fill="currentColor" /> : <Play size={22} className="sm:w-5 sm:h-5 ml-0.5" fill="currentColor" />}
                         </button>
 
                         {/* Stop Button */}
                         <button
+                            type="button"
                             onClick={() => {
                                 if (isPlaying) togglePlay();
                             }}
+                            aria-label="Stop"
+                            title="Stop"
                             className="w-9 h-9 sm:w-8 sm:h-8 z-10 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                         >
                             <Square size={16} className="sm:w-[14px] sm:h-[14px]" fill="currentColor" />
@@ -120,8 +132,10 @@ export function StudioHeader() {
                     {/* BPM Control - Hidden on mobile */}
                     <div className="hidden md:flex group relative items-center bg-muted/40 hover:bg-muted/60 border border-border/50 rounded-lg p-0.5 transition-all focus-within:ring-1 focus-within:ring-primary/50 focus-within:bg-background/80">
                         <button
+                            type="button"
                             onClick={() => setBpm(Math.max(15, Math.floor((project.bpm - 5) / 5) * 5))}
                             className="p-1 hover:bg-background/50 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+                            aria-label="Decrease BPM"
                         >
                             <ChevronLeft size={14} />
                         </button>
@@ -136,13 +150,17 @@ export function StudioHeader() {
                                         setBpm(Number(val));
                                     }
                                 }}
+
                                 className="bg-transparent w-full text-center text-sm font-mono font-bold outline-none text-foreground"
+                                aria-label="BPM Input"
                             />
                         </div>
                         <button
+                            type="button"
                             onClick={() => setBpm(Math.min(300, Math.ceil((project.bpm + 5) / 5) * 5))}
                             className="p-1 hover:bg-background/50 rounded-md text-muted-foreground hover:text-foreground transition-colors"
                             title="Increase BPM"
+                            aria-label="Increase BPM"
                         >
                             <ChevronRight size={14} />
                         </button>
@@ -151,6 +169,7 @@ export function StudioHeader() {
                     {/* Bars Control - Hidden on mobile */}
                     <div className="hidden md:flex group relative items-center bg-muted/40 hover:bg-muted/60 border border-border/50 rounded-lg p-0.5 transition-all focus-within:ring-1 focus-within:ring-primary/50 focus-within:bg-background/80">
                         <button
+                            type="button"
                             onClick={() => {
                                 const options = [1, 2, 4, 8, 16];
                                 const currentIdx = options.indexOf(project.barCount || 4);
@@ -158,6 +177,7 @@ export function StudioHeader() {
                             }}
                             className="p-1 hover:bg-background/50 rounded-md text-muted-foreground hover:text-foreground transition-colors"
                             title="Decrease Bars"
+                            aria-label="Decrease Bars"
                         >
                             <ChevronLeft size={14} />
                         </button>
@@ -166,6 +186,7 @@ export function StudioHeader() {
                             <div className="text-sm font-mono font-bold text-foreground">{project.barCount || 4}</div>
                         </div>
                         <button
+                            type="button"
                             onClick={() => {
                                 const options = [1, 2, 4, 8, 16];
                                 const currentIdx = options.indexOf(project.barCount || 4);
@@ -173,6 +194,7 @@ export function StudioHeader() {
                             }}
                             className="p-1 hover:bg-background/50 rounded-md text-muted-foreground hover:text-foreground transition-colors"
                             title="Increase Bars"
+                            aria-label="Increase Bars"
                         >
                             <ChevronRight size={14} />
                         </button>
@@ -183,6 +205,7 @@ export function StudioHeader() {
                     {/* Theme Toggle - Hidden on mobile, moved to drawer */}
                     <div className="hidden sm:block relative">
                         <button
+                            type="button"
                             onClick={() => setTheme(theme === 'cyber' ? 'lofi' : 'cyber')}
                             onContextMenu={(e) => {
                                 e.preventDefault();
@@ -190,6 +213,9 @@ export function StudioHeader() {
                             }}
                             className="p-2 rounded-full hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-all active:scale-95 border border-transparent hover:border-border/50"
                             title="Left Click: Toggle Mode | Right Click: Theme Menu"
+                            aria-label="Toggle Theme"
+                            aria-expanded={showThemeMenu}
+                            aria-haspopup="true"
                         >
                             {(() => {
                                 switch (theme) {
@@ -217,6 +243,7 @@ export function StudioHeader() {
                                         <span className="px-2 py-1 text-[10px] uppercase font-bold text-muted-foreground/50">Select Theme</span>
                                         {['cyber', 'lofi', 'neo', 'forest', 'ocean', 'sunset', 'midnight'].map((t) => (
                                             <button
+                                                type="button"
                                                 key={t}
                                                 onClick={() => {
                                                     setTheme(t as "cyber" | "lofi" | "neo" | "forest" | "ocean" | "sunset" | "midnight");
@@ -239,8 +266,12 @@ export function StudioHeader() {
 
                     {/* Mobile Menu Button */}
                     <button
+                        type="button"
                         onClick={() => setShowMobileMenu(!showMobileMenu)}
                         className="sm:hidden p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label="Open Mobile Menu"
+                        aria-expanded={showMobileMenu}
+                        aria-haspopup="true"
                     >
                         <Menu size={20} />
                     </button>
@@ -278,7 +309,7 @@ export function StudioHeader() {
                                 <span className="flex items-center gap-2">
                                     <CollabMenu />
                                     <ProjectControl />
-                                    <button onClick={() => setShowMobileMenu(false)} className="p-1 rounded hover:bg-muted">
+                                    <button onClick={() => setShowMobileMenu(false)} className="p-1 rounded hover:bg-muted" aria-label="Close Menu">
                                         <XIcon size={20} />
                                     </button>
                                 </span>
@@ -294,6 +325,7 @@ export function StudioHeader() {
                                         onChange={(e) => useStore.setState(s => ({ project: { ...s.project, name: e.target.value } }))}
                                         className="w-full bg-muted/50 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
                                         placeholder="Untitled Project"
+                                        aria-label="Project Name"
                                     />
                                 </div>
 
@@ -304,6 +336,7 @@ export function StudioHeader() {
                                         <button
                                             onClick={() => setBpm(Math.max(15, project.bpm - 5))}
                                             className="p-2 bg-muted rounded-lg hover:bg-muted/80 border border-white/50"
+                                            aria-label="Decrease BPM"
                                         >
                                             <ChevronLeft size={16} />
                                         </button>
@@ -314,10 +347,12 @@ export function StudioHeader() {
                                                 if (/^\d*$/.test(e.target.value)) setBpm(Number(e.target.value));
                                             }}
                                             className="md:flex-1 max-md:w-16 bg-muted/50 rounded-lg px-3 py-2 text-sm text-center font-mono font-bold outline-none focus:ring-1 focus:ring-primary"
+                                            aria-label="BPM Input"
                                         />
                                         <button
                                             onClick={() => setBpm(Math.min(300, project.bpm + 5))}
                                             className="p-2 bg-muted rounded-lg hover:bg-muted/80 border border-white/50"
+                                            aria-label="Increase BPM"
                                         >
                                             <ChevronRight size={16} />
                                         </button>
@@ -333,6 +368,7 @@ export function StudioHeader() {
                                                 key={bars}
                                                 onClick={() => setBarCount(bars)}
                                                 className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${project.barCount === bars ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'}`}
+                                                aria-label={`Set bar count to ${bars}`}
                                             >
                                                 {bars}
                                             </button>
@@ -412,6 +448,7 @@ export function StudioHeader() {
                                                 onClick={() => setTheme(t as "cyber" | "lofi" | "neo" | "forest" | "ocean" | "sunset" | "midnight")}
                                                 className={`p-2 rounded-lg flex flex-col items-center gap-1 transition-colors ${theme === t ? "bg-primary/20 ring-1 ring-primary" : "bg-muted/50 hover:bg-muted"}`}
                                                 title={t}
+                                                aria-label={`Select ${t} theme`}
                                             >
                                                 <div className={`w-4 h-4 rounded-full ${t === 'cyber' ? 'bg-purple-500' :
                                                     t === 'lofi' ? 'bg-orange-200' : t === 'neo' ? 'bg-cyan-400' :

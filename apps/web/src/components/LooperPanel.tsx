@@ -13,6 +13,7 @@ export function LooperPanel() {
         <>
             {/* Floating Toggle Button */}
             {isOpen ? null : <motion.button
+                type="button"
                 onClick={() => setIsOpen(!isOpen)}
                 className={`fixed bottom-24 right-6 z-30 w-12 h-12 rounded-full shadow-2xl flex items-center justify-center transition-colors bg-primary text-primary-foreground `}
                 whileHover={{ scale: 1.1 }}
@@ -119,12 +120,12 @@ function LoopTrackCard({
                 <span className="text-xs font-bold font-mono text-muted-foreground">LOOP {track.id}</span>
                 <div className="flex items-center gap-2">
                     {hasLoop && track.url && (
-                        <button onClick={handleDownload} className="text-muted-foreground hover:text-primary transition-colors" title="Download Loop">
+                        <button type="button" onClick={handleDownload} className="text-muted-foreground hover:text-primary transition-colors" title="Download Loop">
                             <Download size={14} />
                         </button>
                     )}
                     {hasLoop && (
-                        <button onClick={onClear} className="text-muted-foreground hover:text-destructive transition-colors" title="Clear Loop">
+                        <button type="button" onClick={onClear} className="text-muted-foreground hover:text-destructive transition-colors" title="Clear Loop">
                             <Trash2 size={14} />
                         </button>
                     )}
@@ -136,11 +137,11 @@ function LoopTrackCard({
                 <div className="flex items-center gap-2 justify-center relative">
                     {/* Record / Stop Record */}
                     {isRecording ? (
-                        <button onClick={onStopRecord} className="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all">
+                        <button type="button" onClick={onStopRecord} className="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all" title="Stop Recording" aria-label="Stop Recording">
                             <Square size={12} fill="currentColor" />
                         </button>
                     ) : (
-                        <button onClick={onRecord} disabled={hasLoop} className="w-8 h-8 rounded-full bg-background border border-border text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white disabled:opacity-20 disabled:hover:bg-background disabled:hover:text-red-500 transition-all">
+                        <button type="button" onClick={onRecord} disabled={hasLoop} className="w-8 h-8 rounded-full bg-background border border-border text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white disabled:opacity-20 disabled:hover:bg-background disabled:hover:text-red-500 transition-all" title="Record Loop" aria-label="Record Loop">
                             <Mic size={14} />
                         </button>
                     )}
@@ -148,11 +149,11 @@ function LoopTrackCard({
                     {/* Play / Stop */}
                     {hasLoop && (
                         isPlaying ? (
-                            <button onClick={onStop} className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all">
+                            <button type="button" onClick={onStop} className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all" title="Stop Playback" aria-label="Stop Playback">
                                 <Square size={12} fill="currentColor" />
                             </button>
                         ) : (
-                            <button onClick={onPlay} className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all">
+                            <button type="button" onClick={onPlay} className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all" title="Play Loop" aria-label="Play Loop">
                                 <Play size={14} fill="currentColor" className="ml-0.5" />
                             </button>
                         )
@@ -160,6 +161,7 @@ function LoopTrackCard({
 
                     {/* Volume Button */}
                     <button
+                        type="button"
                         onClick={handleClick}
                         onContextMenu={(e) => { e.preventDefault(); setShowVolume(!showVolume); }}
                         onTouchStart={handleTouchStart}
@@ -200,6 +202,7 @@ function LoopTrackCard({
                                 value={track.volume}
                                 onChange={(e) => onVolume(Number(e.target.value))}
                                 className="w-full origin-center accent-primary cursor-pointer bg-white/20 rounded-full appearance-none"
+                                aria-label="Loop Volume"
                             />
                             <span className="text-[10px] font-mono font-bold">{track.volume}dB</span>
                         </motion.div>

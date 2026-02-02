@@ -37,7 +37,7 @@ pnpm install
 pnpm --filter notater-pwa dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) and turn up your volume. 🔈
+Open [http://localhost:6951](http://localhost:6951) and turn up your volume. 🔈
 
 ## 🛠️ Architecture
 
