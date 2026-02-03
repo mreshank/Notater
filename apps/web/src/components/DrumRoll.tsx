@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useStore } from "@/lib/store";
-import { playDrum, DrumType, DRUM_TYPES } from "@/lib/audio/drums";
+import { playDrum, DrumType, DRUM_TYPES } from "@notater/core";
 // import { useToast } from "./ui/ToastProvider";
 
 // Simple drum labels

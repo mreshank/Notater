@@ -3,7 +3,7 @@
  */
 "use client";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db, getAllProjects } from "./db";
+import { db, getAllProjects } from "@notater/core";
 
 /**
  * Hook to get all projects (reactive)

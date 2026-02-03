@@ -1,7 +1,8 @@
+"use client";
 import { useState, useRef, useEffect } from "react";
 import { useStore } from "@/lib/store";
 import { useProjects } from "@/lib/db-hooks";
-import { exportProjectPackage, importProjectPackage } from "@/lib/sync";
+import { db, saveProject, getProject, exportProjectPackage, importProjectPackage } from "@notater/core";
 import { pushProjectToCloud, pullProjectsFromCloud } from "@/lib/cloud-sync";
 import { loginToGoogle, logoutFromGoogle, listDriveProjects, downloadFromDrive, syncProjectToDrive } from "@/lib/drive";
 import { motion, AnimatePresence } from "framer-motion";
@@ -96,8 +97,8 @@ export function ProjectControl() {
     const handleSyncPush = async () => {
         try {
             await saveProject(); // Save local first
-            const db = await import("@/lib/db");
-            const dbProject = await db.getProject(project.id);
+            await saveProject(); // Save local first
+            const dbProject = await getProject(project.id);
             if (dbProject) {
                 await pushProjectToCloud(dbProject);
                 success("Project pushed to cloud!");
@@ -141,7 +142,8 @@ export function ProjectControl() {
         try {
             setIsDriveSyncing(true);
             await saveProject(); // Save local
-            const projectData = await import("@/lib/db").then(m => m.getProject(project.id));
+            await saveProject(); // Save local
+            const projectData = await getProject(project.id);
             if (projectData) {
                 await syncProjectToDrive(projectData);
                 success("Synced to 'Notater Projects' in Drive!");

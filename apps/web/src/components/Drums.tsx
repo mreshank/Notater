@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { playDrum, DrumType, DRUM_TYPES, setDrumKit, DrumKit, DRUM_KITS } from "@/lib/audio/drums";
+import { playDrum, DrumType, DRUM_TYPES, setDrumKit, DrumKit, DRUM_KITS } from "@notater/core";
 import { useStore } from "@/lib/store";
 import { LucideIcon, Circle, Triangle, Square, Hexagon, Octagon, Star, Disc, Zap, Save, Trash2, X, Sparkles, Loader2 } from "lucide-react";
 import { useToast } from "./ui/ToastProvider";

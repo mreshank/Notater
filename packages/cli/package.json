@@ -17,7 +17,7 @@
         "commander": "^11.0.0",
         "chalk": "^5.0.0",
         "inquirer": "^9.0.0",
-        "notater": "workspace:*"
+        "@notater/core": "workspace:*"
     },
     "devDependencies": {
         "tsup": "^8.0.0",

@@ -1,5 +1,5 @@
 import JSZip from "jszip";
-import { db, saveProject, saveSample, getSample, generateId, StoredProject, StoredSample } from "./db";
+import { db, saveProject, saveSample, getSample, generateId, StoredProject, StoredSample } from "../db";
 
 /**
  * Export the entire project as a .notate package (ZIP)

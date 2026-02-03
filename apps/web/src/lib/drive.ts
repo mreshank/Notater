@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { StoredProject } from "./db";
-import { exportProjectPackage } from "./sync";
+import type { StoredProject } from "@notater/core";
+import { exportProjectPackage } from "@notater/core";
 
 // Global types for Google API
 declare global {

@@ -19,8 +19,11 @@
         "vitest": "^1.0.0"
     },
     "dependencies": {
+        "dexie": "^4.2.1",
+        "jszip": "^3.10.1",
         "midifile-ts": "^1.5.2",
-        "tone": "^15.0.0",
+        "peerjs": "^1.5.5",
+        "tone": "^15.1.22",
         "zod": "^3.0.0"
     }
 }

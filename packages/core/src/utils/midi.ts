@@ -1,13 +1,15 @@
-import { Tone } from "./audio";
-import { useStore } from "./store";
+import * as Tone from "tone";
 
-// Use Tone.js for note conversion (Midi number -> Note name)
-// e.g., 60 -> C4
+export interface MidiHandler {
+    onNoteOn: (note: string, velocity: number) => void;
+    onNoteOff: (note: string) => void;
+}
 
 export class MidiManager {
   private static instance: MidiManager;
   private access: MIDIAccess | null = null;
   private inputs: Map<string, MIDIInput> = new Map();
+  private handler: MidiHandler | null = null;
 
   private constructor() {}
 
@@ -18,8 +20,12 @@ export class MidiManager {
     return MidiManager.instance;
   }
 
+  setHandler(handler: MidiHandler) {
+      this.handler = handler;
+  }
+
   async initialize(): Promise<void> {
-    if (!navigator.requestMIDIAccess) {
+    if (typeof navigator === "undefined" || !navigator.requestMIDIAccess) {
       console.warn("Web MIDI API not supported in this browser.");
       return;
     }
@@ -31,10 +37,7 @@ export class MidiManager {
       this.updateInputs();
       
       // Listen for connection changes
-      // Listen for connection changes
       this.access.onstatechange = () => {
-        // const event = e as MIDIConnectionEvent;
-        // console.log(`MIDI Device ${event.port.state}: ${event.port.name}`);
         this.updateInputs();
       };
 
@@ -46,11 +49,9 @@ export class MidiManager {
   private updateInputs() {
     if (!this.access) return;
 
-    // Clear old listeners if needed (simplified: just re-binding)
     this.inputs.clear();
 
     for (const input of this.access.inputs.values()) {
-      this.inputs.set(input.id, input);
       this.inputs.set(input.id, input);
       input.onmidimessage = (e) => this.handleMidiMessage(e as MIDIMessageEvent);
       console.log(`Attached listener to MIDI Input: ${input.name}`);
@@ -64,7 +65,6 @@ export class MidiManager {
     const data1 = data[1];
     const data2 = data[2];
     const command = status & 0xf0;
-    // const channel = status & 0x0f; // Not using channel yet
 
     // Note On
     if (command === 144) {
@@ -81,16 +81,14 @@ export class MidiManager {
     }
   }
 
-  private noteOn(noteNumber: number, _velocity: number) {
+  private noteOn(noteNumber: number, velocity: number) {
     const noteName = Tone.Frequency(noteNumber, "midi").toNote();
-    // Dispatch to store
-    useStore.getState().triggerAttack(noteName);
+    if (this.handler) this.handler.onNoteOn(noteName, velocity);
   }
 
   private noteOff(noteNumber: number) {
     const noteName = Tone.Frequency(noteNumber, "midi").toNote();
-    // Dispatch to store
-    useStore.getState().triggerRelease(noteName);
+    if (this.handler) this.handler.onNoteOff(noteName);
   }
 }
 

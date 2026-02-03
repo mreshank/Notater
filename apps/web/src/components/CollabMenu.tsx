@@ -1,12 +1,12 @@
 
 import { useState } from "react";
-import { p2p } from "@/lib/p2p";
+import { p2p, type Collaborator } from "@notater/core";
 import { Copy, Check, Share2, Radio, Users, Loader2, Wifi } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useModal } from "./ui/ModalProvider";
 import { useUser } from "@clerk/nextjs";
-import { useStore, type Collaborator } from "@/lib/store";
+import { useStore } from "@/lib/store";
 
 const AVATAR_COLORS = [
     "bg-red-500", "bg-orange-500", "bg-amber-500", "bg-yellow-500",

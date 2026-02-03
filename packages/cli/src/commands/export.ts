@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { patternToMidi, Pattern, Track, Instrument, Step } from 'notater';
+import { patternToMidi, Pattern, Track, Instrument, Step } from '@notater/core';
 import fs from 'fs/promises';
 import path from 'path';
 

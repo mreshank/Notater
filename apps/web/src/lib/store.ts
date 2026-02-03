@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import * as Tone from "tone";
+import { toast } from "sonner";
 import { 
   initAudio, 
   setBpm as setGlobalBpm,
@@ -9,27 +9,33 @@ import {
   createEffectsChain,
   type SynthPreset,
   applyPreset,
-  mixer, // Import mixer
+  mixer,
   setDrumKit,
   type DrumKit,
   getDrumFromPitch,
-  playDrum
-} from "./audio";
-import { 
-    initLooper, startRecording, stopRecording, playLoop as audioPlayLoop, stopLoop as audioStopLoop, clearLoop as audioClearLoop, setLoopVolume, muteLoop 
-} from "./audio/looper";
-import { 
+  playDrum,
+  initLooper, 
+  startRecording, 
+  stopRecording, 
+  playLoop as audioPlayLoop, 
+  stopLoop as audioStopLoop, 
+  clearLoop as audioClearLoop, 
+  setLoopVolume, 
+  muteLoop,
+  exportProjectToWav,
+  getSampler,
+  Tone,
+  p2p,
   saveProject as saveProjectToDb, 
   getProject as getProjectFromDb,
-  generateId, 
-} from "./db";
-import { exportProjectToWav } from "./audio/export";
-import { getSampler } from "./audio/sampler";
-import { saveSample, getSample } from "./db";
-import { p2p } from "./p2p";
-import { toast } from "sonner";
+  generateId,
+  saveSample, 
+  getSample,
+  type Note,
+  type Collaborator,
+} from "@notater/core";
 
-// Types
+// SynthParams can stay if not in core, or move it. Core has types?
 export interface SynthParams {
     oscillatorType: "triangle" | "sine" | "square" | "sawtooth" | "fatsawtooth" | "pulse" | "pwm";
     attack: number;
@@ -49,7 +55,6 @@ export interface LoopTrack {
     url?: string;
 }
 
-
 const ROWS = [
   { id: "kick", label: "KICK", note: "C2", color: "bg-primary" },
   { id: "snare", label: "SNARE", note: "D2", color: "bg-secondary" },
@@ -57,20 +62,11 @@ const ROWS = [
   { id: "clap", label: "CLAP", note: "D#2", color: "bg-destructive" },
 ];
 
-export type Note = {
-  id: string;
-  pitch: string;
-  step: number;
-  duration: number;
-};
-
-export interface Collaborator {
-  id: string;
-  name: string;
-  color: string;
-  isHost?: boolean;
-}
-
+// Note: MixerChannel comes from core now (if exported from mixer.ts)
+// But mixer.ts in core exported `ChannelStrip` (Tone nodes), not the State interface.
+// State interface `MixerChannel` was defined in Store. We should keep it here or move types to core/models.
+// For now, re-define or keep if not in core.
+// Note: MixerChannel type for UI state
 export interface MixerChannel {
   id: string;
   name: string;
@@ -91,7 +87,7 @@ export interface MixerChannel {
 
 // Global synth instance (lazy initialized)
 let globalSynth: Tone.PolySynth | null = null;
-let globalEffects: ReturnType<typeof createEffectsChain> | null = null;
+let globalEffects: ReturnType<typeof createEffectsChain> | null = null; // createEffectsChain return type?
 const trackPlayers: Record<string, Tone.Player> = {};
 
 interface AppState {
@@ -1009,3 +1005,94 @@ export const useStore = create<AppState>((set, get) => ({
       }));
   }
 }));
+
+// Initialize P2P Handler
+p2p.setHandler({
+    getState: () => {
+        const state = useStore.getState();
+        return {
+            project: state.project,
+            sequencerGrid: state.sequencerGrid,
+            mixer: state.mixer,
+            synthPreset: state.synthPreset,
+            pianoRollNotes: state.pianoRollNotes,
+            collaborators: state.collaborators
+        };
+    },
+    setState: (data) => {
+        // Apply state including UI state
+        useStore.setState({ 
+            project: data.project,
+            sequencerGrid: data.sequencerGrid,
+            mixer: data.mixer,
+            synthPreset: data.synthPreset,
+            pianoRollNotes: data.pianoRollNotes,
+            collaborators: data.collaborators
+        });
+
+        const store = useStore.getState();
+        
+        // Sync Audio Engine to new State
+        if (data.project.bpm) setGlobalBpm(data.project.bpm);
+        if (data.synthPreset) store.setSynthPreset(data.synthPreset);
+        
+        // Mixer Sync (Apply to Audio Engine)
+        Object.entries(data.mixer).forEach(([id, ch]) => {
+             const mch = ch as MixerChannel;
+             mixer.setVolume(id, mch.volume);
+             mixer.setPan(id, mch.pan);
+             mixer.setMute(id, mch.muted);
+             mixer.setEQ(id, "low", mch.eq.low);
+             mixer.setEQ(id, "mid", mch.eq.mid);
+             mixer.setEQ(id, "high", mch.eq.high);
+             // Sends might need direct access if mixer.setSend exists
+             if (mixer.setSend) {
+                  mixer.setSend(id, "reverb", mch.sends.reverb);
+                  mixer.setSend(id, "delay", mch.sends.delay);
+             }
+        });
+    },
+    
+    // Collaborator Events
+    onCollaboratorJoin: (user) => useStore.getState().addCollaborator(user),
+    onCollaboratorLeave: (id) => useStore.getState().removeCollaborator(id),
+    onCollaboratorsUpdate: (users) => useStore.getState().setCollaborators(users),
+    
+    // State Updates
+    onSequencerUpdate: (row, step, val) => useStore.getState().toggleSequencerStep(row, step, val !== undefined ? !!val : undefined),
+    
+    onMixerUpdate: (trackId, field, value) => {
+       const store = useStore.getState();
+       if (field === 'volume') store.setTrackVolume(trackId, value as number);
+       if (field === 'pan') store.setTrackPan(trackId, value as number);
+       if (field === 'muted') store.toggleTrackMute(trackId, value as boolean);
+       if (field === 'solo') store.toggleTrackSolo(trackId);
+       if (field.startsWith('eq-')) store.setTrackEQ(trackId, field.split('-')[1] as any, value as number);
+       if (field.startsWith('send-')) store.setTrackSend(trackId, field.split('-')[1] as any, value as number);
+    },
+    
+    onTransportUpdate: (playing) => {
+         if (useStore.getState().isPlaying !== playing) useStore.getState().togglePlay();
+    },
+    
+    onBpmUpdate: (bpm) => useStore.getState().setBpm(bpm),
+    
+    onMasterEffectUpdate: (field, effect, param, value) => {
+        const store = useStore.getState();
+        if (effect === 'eq') store.setMasterEQ(param as any, value as number);
+        else if (field) store.setMasterEffect(field, value as string | number);
+    },
+    
+    onPianoRollUpdate: (action, note, id) => {
+        const store = useStore.getState();
+        if (action === 'add' && note) store.addPianoNote(note);
+        if (action === 'remove' && id) store.removePianoNote(id);
+        if (action === 'clear') store.clearPianoNotes();
+    },
+    
+    onLog: (msg, type) => {
+        if (type === 'error') toast.error(msg);
+        else if (type === 'success') toast.success(msg);
+        else toast.info(msg);
+    }
+});

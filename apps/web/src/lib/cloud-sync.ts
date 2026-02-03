@@ -1,4 +1,4 @@
-import { StoredProject } from "./db";
+import { StoredProject } from "@notater/core";
 import { PutBlobResult } from "@vercel/blob";
 
 // Simple sync hook (placeholder for future expansion)
@@ -65,7 +65,7 @@ export async function pullProjectsFromCloud(): Promise<StoredProject[]> {
 export async function saveAndPushToCloud(currentProjectId: string, options?: { keepalive?: boolean }) {
     // We dynamically import db to avoid server-side issues (though this runs on client)
     try {
-        const db = await import("./db");
+        const db = await import("@notater/core");
         // We assume the store has already saved to DB via persistence, 
         // but to be safe we might want to trigger a save. 
         // However, useStore.getState().saveProject() is a hook function usually.

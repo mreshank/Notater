@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState, useMemo } from "react";
 import { useStore } from "@/lib/store";
-import { getDrumFromPitch } from "@/lib/audio";
+import { getDrumFromPitch } from "@notater/core";
 import { motion, AnimatePresence } from "framer-motion";
 import { Music, Layers, Grid3X3, Eraser, ChevronsLeftRight, MousePointer2, Pencil, Trash2 } from "lucide-react";
 import { InstrumentSelect } from "./InstrumentSelect";

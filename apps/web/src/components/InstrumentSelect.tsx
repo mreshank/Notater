@@ -1,7 +1,6 @@
 "use client";
 import { useStore } from "@/lib/store";
-import { SynthPreset } from "@/lib/audio/synth";
-import { DRUM_KITS } from "@/lib/audio/drums";
+import { DRUM_KITS, SynthPreset } from "@notater/core";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Piano, Drum } from "lucide-react";
