@@ -1,6 +1,6 @@
 {
     "name": "notater-monorepo",
-    "version": "0.1.1",
+    "version": "0.1.21",
     "description": "An offline-first, collaborative music production workstation (DAW) running entirely in the browser. Features real-time P2P sync, AI drum generation, and a Tone.js audio engine.",
     "keywords": [
         "music-production",

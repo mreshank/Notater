@@ -1,6 +1,6 @@
 {
   "name": "notater-pwa",
-  "version": "0.1.1",
+  "version": "0.1.21",
   "private": true,
   "scripts": {
     "dev": "next dev --port 6951",
